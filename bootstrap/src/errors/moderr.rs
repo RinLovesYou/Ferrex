@@ -1,3 +1,5 @@
+use std::io;
+
 use thiserror::Error;
 use unity_rs::runtime::RuntimeError;
 
@@ -8,5 +10,7 @@ pub enum ModError {
     #[error(transparent)]
     Runtime(#[from] RuntimeError),
     #[error(transparent)]
-    Log(#[from] LogError)
+    Log(#[from] LogError),
+    #[error(transparent)]
+    Io(#[from] io::Error),
 }

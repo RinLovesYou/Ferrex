@@ -6,7 +6,7 @@ use unity_rs::{
     runtime::{Runtime, RuntimeType},
 };
 
-use crate::{errors::hookerr::HookError, internal_failure, mods, log};
+use crate::{errors::hookerr::HookError, internal_failure, mods::{manager::ModManager}, log};
 
 use super::hook;
 
@@ -93,7 +93,7 @@ fn invoke_detour_inner(
 
         hook::detach(transmute(runtime_invoke))?;
 
-        mods::manager::init(runtime)?;
+        let m = ModManager::new()?;
     }
 
     Ok(ret)

@@ -10,10 +10,13 @@ ctor = "0.1.26"
 #unity-rs = { git = "https://github.com/RinLovesYou/unity-rs.git" }
 unity-rs = { path = "/home/sarah/github/unity-rs/unity" }
 dobby-rs = { git = "https://github.com/RinLovesYou/dobby-rs" }
-wasmer = "*"
+wasmtime = { version = "4.0", features = ["cranelift", "component-model"] }
+wasmtime-wasi = "*"
 thiserror = "*"
 chrono = "*"
 colored = "*"
+anyhow = "*"
+lazy_static = "*"
 
 [lib]
 name = "Bootstrap"

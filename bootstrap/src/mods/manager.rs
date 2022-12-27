@@ -1,49 +1,95 @@
-use std::{error::Error, fs::{self}};
+use std::{
+    error::Error,
+    fs::{self, DirEntry},
+    path::{Path, PathBuf}, io,
+};
 
-use unity_rs::runtime::Runtime;
-use wasmer::{Store, Module, imports, Function, Instance};
+use anyhow::Result;
+use wasmtime::*;
 
-use crate::log;
+use crate::{log, err};
 
-pub fn init(_runtime: Box<dyn Runtime>) -> Result<(), Box<dyn Error>> {
-    log!("Initializing Wasi Mods")?;
+use super::exports;
 
-    let mods_dir = std::env::current_dir()?.join("Ferrex").join("Mods");
+pub struct FerrexMod {
+    module: Module,
+    instance: Instance,
+}
 
-    if !mods_dir.exists() {
-        fs::create_dir(&mods_dir)?;
+pub struct ModManager {
+    engine: Engine,
+    store: Store<()>,
+    mods: Vec<FerrexMod>,
+}
+
+impl ModManager {
+    pub fn new() -> Result<Self, Box<dyn Error>> {
+        log!("Initializing Wasi Mods")?;
+
+        let mods_dir = std::env::current_dir()?.join("Ferrex").join("Mods");
+
+        if !mods_dir.exists() {
+            fs::create_dir(&mods_dir)?;
+        }
+        let engine = Engine::default();
+        let mut store = Store::new(&engine, ());
+        let mut mods: Vec<FerrexMod> = Vec::new();
+
+        let directory = fs::read_dir(mods_dir)?;
+
+        let wasm_files: Vec<DirEntry> = directory.filter_map(Result::ok)
+        .filter_map(|d| d.path().to_str().and_then(|f| if f.ends_with(".wasm") { Some(d) } else { None })).collect();
+
+        for file in wasm_files {
+            log!("Loading mod from: {}", file.path().display())?;
+            let fmod = FerrexMod::new(file.path(), &engine, &mut store);
+            if fmod.is_err() {
+                err!("Failed to load mod: {}", fmod.err().unwrap().to_string());
+                continue;
+            }
+
+            mods.push(fmod?);
+        }
+
+        for fmod in mods.iter_mut() {
+            fmod.init(&mut store)?;
+        }
+
+        Ok(ModManager {
+            engine,
+            store,
+            mods
+        })
+    }
+}
+
+impl FerrexMod {
+    fn new<P: AsRef<Path>>(path: P, engine: &Engine, mut store: impl AsContextMut<Data = ()>) -> Result<Self, Box<dyn Error>> {
+        let module = Module::from_file(engine, path)?;
+
+        let log_str = Func::wrap(&mut store, exports::log_str);
+
+        let instance = Instance::new(&mut store, &module, &[log_str.into()])?;
+
+        let ferrex_mod = FerrexMod{
+            module,
+            instance
+        };
+
+        Ok(ferrex_mod)
     }
 
-    let path = fs::read("Ferrex/Mods/ferrex_plugin.wasm")?;
+    fn init(&mut self, mut store: impl AsContextMut) -> Result<(), Box<dyn Error>> {
+        let foo = self.instance
+            .get_func(&mut store, "init")
+            .expect("Mod doesn't export a init function!");
 
-    let mut store = Store::default();
-    let module = Module::new(&store, path)?;
+        // ... or we can make a static assertion about its signature and call it.
+        // Our first call here can fail if the signatures don't match, and then the
+        // second call can fail if the function traps (like the `match` above).
+        let foo = foo.typed::<(), ()>(&mut store)?;
+        foo.call(&mut store, ())?;
 
-    let function = Function::new_typed(
-        &mut store,
-        exposed_log
-        
-    );
-
-    let imports = imports! { 
-        "env" => {
-            "log_ferrex" => function,
-        },
-    };
-
-    #[allow(unused_variables)]
-    let instance = Instance::new(&mut store, &module, &imports)?;
-
-    let _ = instance.exports.get_function("entry")?.call(&mut store, &[]);
-
-    Ok(())
-}
-
-fn exposed_log() {
-    let _ = exposed_log_inner();
-}
-
-fn exposed_log_inner() -> Result<(), Box<dyn Error>> {
-    log!("TEST")?;
-    Ok(())
+        Ok(())
+    }
 }
