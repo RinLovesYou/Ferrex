@@ -72,8 +72,8 @@ TODO
 ## Roadmap
 
 - [x] Injection
-- [x] Il2cpp
-- [ ] Custom Dobby wrapper, with integration
+- [x] Wasm POC
+- [ ] Modding API
 
 See the [open issues](https://github.com/RinLovesYou/Ferrex/issues) for a full list of proposed features (and known issues).
 
