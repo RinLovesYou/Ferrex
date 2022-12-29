@@ -5,6 +5,7 @@ mod logging;
 mod hooking;
 mod errors;
 mod mods;
+mod bindgen;
 
 use ctor::ctor;
 

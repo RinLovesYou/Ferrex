@@ -1,2 +1,2 @@
 [workspace]
-members = ["bootstrap", "Proxy"]
+members = ["bootstrap", "Proxy", "unity"]
