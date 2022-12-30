@@ -5,8 +5,10 @@ use std::ffi::{c_char, c_int, c_void};
 use crate::libs::{LibError, NativeLibrary, NativeMethod};
 
 use super::types::{
-    MonoAssembly, MonoClass, MonoDomain, MonoImage, MonoMethod, MonoObject, MonoString, MonoThread,
+    MonoAssembly, MonoClass, MonoDomain, MonoImage, MonoMethod, MonoObject, MonoString, MonoThread, AssemblyName,
 };
+
+type GFunc = extern "C" fn(*mut MonoAssembly, *mut c_void);
 
 #[derive(Debug, Clone)]
 pub struct MonoExports {
@@ -45,6 +47,8 @@ pub struct MonoExports {
     pub mono_install_assembly_search_hook: Option<NativeMethod<fn(*mut c_void, *mut c_void)>>,
     pub mono_install_assembly_load_hook: Option<NativeMethod<fn(*mut c_void, *mut c_void)>>,
     pub mono_assembly_get_object: Option<NativeMethod<fn(*mut MonoDomain, *mut MonoAssembly) -> *mut MonoObject>>,
+    pub mono_assembly_foreach: Option<NativeMethod<fn(GFunc, *mut c_void)>>,
+    pub mono_assembly_get_name: Option<NativeMethod<fn(*mut MonoAssembly) -> *mut AssemblyName>>,
 }
 
 impl MonoExports {
@@ -96,6 +100,10 @@ impl MonoExports {
             mono_install_assembly_preload_hook: Some(
                 lib.sym("mono_install_assembly_preload_hook")?,
             ),
+            mono_assembly_foreach: Some(
+                lib.sym("mono_assembly_foreach")?,
+            ),
+            mono_assembly_get_name: Some(lib.sym("mono_assembly_get_name")?),
         })
     }
 }

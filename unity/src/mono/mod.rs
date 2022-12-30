@@ -5,11 +5,11 @@ use std::{error, path::PathBuf, ptr::{addr_of, addr_of_mut}, fmt::{Display, self
 use thiserror::Error;
 
 use crate::{
-    common::{thread::UnityThread, domain::UnityDomain, string::UnityString, method::{MethodPointer, UnityMethod}, object::UnityObject},
+    common::{thread::UnityThread, domain::UnityDomain, string::UnityString, method::{MethodPointer, UnityMethod}, object::UnityObject, assembly::UnityAssembly},
     libs::{self, NativeLibrary, NativeMethod}, runtime::{Runtime, RuntimeError, RuntimeType},
 };
 
-use self::{exports::MonoExports, types::{MonoThread, MonoDomain, MonoObject}};
+use self::{exports::MonoExports, types::{MonoThread, MonoDomain, MonoObject, MonoAssembly}};
 
 pub mod exports;
 pub mod types;
@@ -276,5 +276,45 @@ impl Runtime for Mono {
         };
 
         Ok(name.to_str()?.to_string())
+    }
+
+    fn get_assemblies(&self) -> Result<Vec<UnityAssembly>, RuntimeError> {
+        let function = &self.exports.clone().mono_assembly_foreach.ok_or(RuntimeError::MissingFunction("mono_assembly_foreach"))?;
+
+        let mut assemblies: Vec<UnityAssembly> = Vec::new();
+
+        function(enumerate_assemblies, &mut assemblies as *mut _ as *mut c_void);
+
+        Ok(assemblies)
+    }
+
+    fn get_assembly_name(&self, assembly: UnityAssembly) -> Result<String, RuntimeError> {
+        let function = &self.exports.clone().mono_assembly_get_name.ok_or(RuntimeError::MissingFunction("mono_assembly_get_name"))?;
+
+        if assembly.inner.is_null() {
+            return Err(RuntimeError::NullPointer("assembly"));
+        }
+
+        let name = function(assembly.inner.cast());
+
+        if name.is_null() {
+            return Err(RuntimeError::ReturnedNull("mono_assembly_get_name"));
+        }
+
+        let name = unsafe {
+            CStr::from_ptr((*name).name.cast())
+        }.to_str()?;
+
+        Ok(name.to_string())
+    }
+}
+
+extern "C" fn enumerate_assemblies(assembly: *mut MonoAssembly, data: *mut c_void) {
+    unsafe {
+        if assembly.is_null() || data.is_null() {
+            return;
+        }
+
+        (*data.cast::<Vec<UnityAssembly>>()).push(UnityAssembly { inner: assembly.cast() });
     }
 }

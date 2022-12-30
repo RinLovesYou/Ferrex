@@ -5,3 +5,4 @@ pub mod thread;
 pub mod method;
 pub mod string;
 pub mod object;
+pub mod assembly;

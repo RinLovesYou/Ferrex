@@ -7,7 +7,7 @@ use thiserror::Error;
 
 use crate::{
     join_dll_path,
-    libs::{self, NativeLibrary, NativeMethod}, runtime::{Runtime, RuntimeError, RuntimeType}, common::{thread::UnityThread, string::UnityString, domain::UnityDomain, method::{MethodPointer, UnityMethod}, object::UnityObject}, mono::AssemblyHookType,
+    libs::{self, NativeLibrary, NativeMethod}, runtime::{Runtime, RuntimeError, RuntimeType}, common::{thread::UnityThread, string::UnityString, domain::UnityDomain, method::{MethodPointer, UnityMethod}, object::UnityObject, assembly::UnityAssembly}, mono::AssemblyHookType,
 };
 
 use self::{exports::Il2CppExports, types::{Il2CppThread, Il2CppObject}};
@@ -218,5 +218,13 @@ impl Runtime for Il2Cpp {
         };
 
         Ok(name.to_str()?.to_string())
+    }
+
+    fn get_assemblies(&self) -> Result<Vec<UnityAssembly>, RuntimeError> {
+        Ok(Vec::new())
+    }
+
+    fn get_assembly_name(&self, assembly: UnityAssembly) -> Result<String, RuntimeError> {
+        Ok("stub".to_string())
     }
 }

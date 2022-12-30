@@ -1,15 +1,29 @@
 //! TODO
 
-use std::{error, path::PathBuf, io, str::Utf8Error, fmt::{Display, self}};
+use std::{
+    error,
+    fmt::{self, Display},
+    io,
+    path::PathBuf,
+    str::Utf8Error,
+};
 
 use libc::c_void;
 use thiserror::Error;
 
 use crate::{
-    common::{domain::UnityDomain, thread::UnityThread, method::{MethodPointer, UnityMethod}, object::UnityObject, string::UnityString},
+    common::{
+        assembly::UnityAssembly,
+        domain::UnityDomain,
+        method::{MethodPointer, UnityMethod},
+        object::UnityObject,
+        string::UnityString,
+        thread::UnityThread,
+    },
     il2cpp::Il2Cpp,
-    mono::{Mono, AssemblyHookType},
-    utils, libs::{self, NativeMethod},
+    libs::{self, NativeMethod},
+    mono::{AssemblyHookType, Mono},
+    utils,
 };
 
 #[derive(Debug, Error)]
@@ -61,21 +75,19 @@ pub enum RuntimeError {
 
 pub enum RuntimeType<'a> {
     Mono(&'a Mono),
-    Il2Cpp(&'a Il2Cpp)
+    Il2Cpp(&'a Il2Cpp),
 }
 
 impl Display for RuntimeType<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             RuntimeType::Il2Cpp(_) => write!(f, "Il2cpp"),
-            RuntimeType::Mono(mono) => {
-                match mono.is_old {
-                    true => write!(f, "Mono"),
-                    false => write!(f, "MonoBleedingEdge")
-                }
-            }
+            RuntimeType::Mono(mono) => match mono.is_old {
+                true => write!(f, "Mono"),
+                false => write!(f, "MonoBleedingEdge"),
+            },
         }
-     }
+    }
 }
 
 pub trait Runtime {
@@ -85,16 +97,31 @@ pub trait Runtime {
     fn set_main_thread(&self, thread: UnityThread) -> Result<(), RuntimeError>;
     fn attach_to_thread(&self, thread: UnityDomain) -> Result<UnityThread, RuntimeError>;
     fn add_internal_call(&self, name: String, func: MethodPointer) -> Result<(), RuntimeError>;
-    fn install_assembly_hook(&self, hook_type: AssemblyHookType, func: MethodPointer) -> Result<(), RuntimeError>;
+    fn install_assembly_hook(
+        &self,
+        hook_type: AssemblyHookType,
+        func: MethodPointer,
+    ) -> Result<(), RuntimeError>;
     fn create_debug_domain(&self, domain: UnityDomain) -> Result<(), RuntimeError>;
     fn get_export_ptr(&self, name: &str) -> Result<MethodPointer, RuntimeError>;
-    fn set_domain_config(&self, domain: UnityDomain, dir: String, name: String) -> Result<(), RuntimeError>;
+    fn set_domain_config(
+        &self,
+        domain: UnityDomain,
+        dir: String,
+        name: String,
+    ) -> Result<(), RuntimeError>;
     fn new_string(&self, name: String) -> Result<UnityString, RuntimeError>;
     fn string_from_raw(&self, name: *const i8) -> Result<UnityString, RuntimeError>;
-    fn invoke_method(&self, method: UnityMethod, obj: Option<UnityObject>, params: Option<&mut Vec<*mut c_void>>) -> Result<Option<UnityObject>, RuntimeError>;
+    fn invoke_method(
+        &self,
+        method: UnityMethod,
+        obj: Option<UnityObject>,
+        params: Option<&mut Vec<*mut c_void>>,
+    ) -> Result<Option<UnityObject>, RuntimeError>;
     fn get_method_name(&self, method: UnityMethod) -> Result<String, RuntimeError>;
+    fn get_assemblies(&self) -> Result<Vec<UnityAssembly>, RuntimeError>;
+    fn get_assembly_name(&self, assembly: UnityAssembly) -> Result<String, RuntimeError>;
 }
-
 
 /// looks up the runtime
 pub fn get_runtime() -> Result<Box<dyn Runtime>, RuntimeError> {
@@ -107,8 +134,7 @@ pub fn get_runtime() -> Result<Box<dyn Runtime>, RuntimeError> {
         .parent()
         .ok_or(RuntimeError::BasePathNotFound)?
         .to_path_buf();
-    let data_path =
-        utils::path::get_data_path(&exe_path)?;
+    let data_path = utils::path::get_data_path(&exe_path)?;
 
     let mono = utils::path::find_mono(&base_path, &data_path);
 
@@ -128,9 +154,7 @@ fn is_unity(file_path: &PathBuf) -> Result<bool, RuntimeError> {
         .to_str()
         .ok_or(RuntimeError::BasePathNotFound)?;
 
-    let base_folder = file_path
-        .parent()
-        .ok_or(RuntimeError::BasePathNotFound)?;
+    let base_folder = file_path.parent().ok_or(RuntimeError::BasePathNotFound)?;
 
     let data_path = base_folder.join(format!("{}_Data", file_name));
 
