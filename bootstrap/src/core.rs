@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use crate::{hooking, logging::logger, log};
+use crate::{hooking, log, logging::logger};
 
 pub fn init() -> Result<(), Box<dyn Error>> {
     if !check_unity()? {
@@ -8,9 +8,9 @@ pub fn init() -> Result<(), Box<dyn Error>> {
     }
 
     logger::init()?;
-    
+
     log!("Initializing Ferrex")?;
-    
+
     hooking::invoke::hook_init()?;
 
     Ok(())
@@ -19,21 +19,18 @@ pub fn init() -> Result<(), Box<dyn Error>> {
 fn check_unity() -> Result<bool, Box<dyn Error>> {
     let file_path = std::env::current_exe()?;
 
-    let file_name = file_path.file_stem()
-        .ok_or_else(|| "failed to get file name")?
+    let file_name = file_path
+        .file_stem()
+        .ok_or("failed to get file name")?
         .to_str()
-        .ok_or_else(|| "failed to get file name")?;
+        .ok_or("failed to get file name")?;
 
-
-    let base_folder = file_path.parent()
-        .ok_or_else(|| "failed to get base folder")?;
-
+    let base_folder = file_path.parent().ok_or("failed to get base folder")?;
 
     let data_path = base_folder.join(format!("{}_Data", file_name));
 
-
     if !data_path.exists() {
-        return Ok(false)
+        return Ok(false);
     }
 
     let global_game_managers = data_path.join("globalgamemanagers");

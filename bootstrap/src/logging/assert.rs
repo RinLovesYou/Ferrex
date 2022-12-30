@@ -1,12 +1,12 @@
 //! lets us throw an internal failure
 
 /// Throws an internal failure with the given message
-/// 
+///
 /// This logs your message to file, creates a message box, and then panics.
 /// It uses the same syntax as _format!_
-/// 
+///
 /// # Examples
-/// 
+///
 /// ```
 /// # use utils::assert;
 /// assert::internal_failure!("This is an internal failure");

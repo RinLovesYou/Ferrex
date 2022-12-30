@@ -6,7 +6,6 @@ use crate::runtime::{Runtime, RuntimeError};
 
 pub type MethodPointer = *mut c_void;
 
-
 /// Represents a C# Method
 #[derive(Debug)]
 pub struct UnityMethod {

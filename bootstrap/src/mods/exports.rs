@@ -1,6 +1,6 @@
 use std::error;
 
-use wasmtime::{Caller, Extern};
+use wasmtime::Caller;
 
 use crate::{err, log};
 
@@ -10,7 +10,11 @@ pub fn log_str(caller: Caller<'_, ()>, ptr: i32, len: i32) {
     })
 }
 
-fn log_str_inner(mut caller: Caller<'_, ()>, ptr: i32, len: i32) -> Result<(), Box<dyn error::Error>> {
+fn log_str_inner(
+    mut caller: Caller<'_, ()>,
+    ptr: i32,
+    len: i32,
+) -> Result<(), Box<dyn error::Error>> {
     let mem = caller.get_export("memory");
 
     let memory = mem

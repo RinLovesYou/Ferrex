@@ -1,8 +1,8 @@
 //! TODO
 
-pub mod domain;
-pub mod thread;
-pub mod method;
-pub mod string;
-pub mod object;
 pub mod assembly;
+pub mod domain;
+pub mod method;
+pub mod object;
+pub mod string;
+pub mod thread;

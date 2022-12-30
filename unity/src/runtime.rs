@@ -21,7 +21,7 @@ use crate::{
         thread::UnityThread,
     },
     il2cpp::Il2Cpp,
-    libs::{self, NativeMethod},
+    libs::{self},
     mono::{AssemblyHookType, Mono},
     utils,
 };
@@ -73,13 +73,14 @@ pub enum RuntimeError {
     NotImplemented(&'static str),
 }
 
+#[derive(Debug)]
 pub enum RuntimeType<'a> {
     Mono(&'a Mono),
     Il2Cpp(&'a Il2Cpp),
 }
 
 impl Display for RuntimeType<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
             RuntimeType::Il2Cpp(_) => write!(f, "Il2cpp"),
             RuntimeType::Mono(mono) => match mono.is_old {
@@ -91,7 +92,7 @@ impl Display for RuntimeType<'_> {
 }
 
 pub trait Runtime {
-    fn get_type(&self) -> RuntimeType;
+    fn get_type(&self) -> RuntimeType<'_>;
     fn get_domain(&self) -> Result<UnityDomain, RuntimeError>;
     fn get_current_thread(&self) -> Result<UnityThread, RuntimeError>;
     fn set_main_thread(&self, thread: UnityThread) -> Result<(), RuntimeError>;

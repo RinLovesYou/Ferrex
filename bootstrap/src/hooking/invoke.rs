@@ -1,4 +1,4 @@
-use std::{mem::transmute, error::Error};
+use std::{error::Error, mem::transmute};
 
 use dobby_rs::Address;
 use unity_rs::{
@@ -6,7 +6,7 @@ use unity_rs::{
     runtime::{Runtime, RuntimeType},
 };
 
-use crate::{errors::hookerr::HookError, internal_failure, mods::{manager::ModManager}, log};
+use crate::{errors::hookerr::HookError, internal_failure, log, mods::manager::ModManager};
 
 use super::hook;
 
@@ -25,7 +25,9 @@ pub fn hook_init() -> Result<(), HookError> {
     };
 
     if runtime_invoke.is_null() {
-        return Err(HookError::Nullpointer("could not find runtime_invoke".to_string()));
+        return Err(HookError::Nullpointer(
+            "could not find runtime_invoke".to_string(),
+        ));
     }
 
     log!("Attaching Hook to runtime_invoke")?;
@@ -93,7 +95,7 @@ fn invoke_detour_inner(
 
         hook::detach(transmute(runtime_invoke))?;
 
-        let m = ModManager::new()?;
+        let _ = ModManager::new()?;
     }
 
     Ok(ret)

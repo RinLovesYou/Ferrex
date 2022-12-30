@@ -1,15 +1,30 @@
 //! TODO
 
-use std::{error, path::PathBuf, ptr::{addr_of, addr_of_mut}, fmt::{Display, self}, ffi::{CString, c_void, CStr}};
-
-use thiserror::Error;
-
-use crate::{
-    common::{thread::UnityThread, domain::UnityDomain, string::UnityString, method::{MethodPointer, UnityMethod}, object::UnityObject, assembly::UnityAssembly},
-    libs::{self, NativeLibrary, NativeMethod}, runtime::{Runtime, RuntimeError, RuntimeType},
+use std::{
+    error,
+    ffi::{c_void, CStr, CString},
+    fmt::{self, Display},
+    path::PathBuf,
+    ptr::addr_of_mut,
 };
 
-use self::{exports::MonoExports, types::{MonoThread, MonoDomain, MonoObject, MonoAssembly}};
+use crate::{
+    common::{
+        assembly::UnityAssembly,
+        domain::UnityDomain,
+        method::{MethodPointer, UnityMethod},
+        object::UnityObject,
+        string::UnityString,
+        thread::UnityThread,
+    },
+    libs::{self, NativeLibrary, NativeMethod},
+    runtime::{Runtime, RuntimeError, RuntimeType},
+};
+
+use self::{
+    exports::MonoExports,
+    types::{MonoAssembly, MonoObject},
+};
 
 pub mod exports;
 pub mod types;
@@ -71,7 +86,7 @@ impl Mono {
 }
 
 impl Runtime for Mono {
-    fn get_type(&self) -> RuntimeType {
+    fn get_type(&self) -> RuntimeType<'_> {
         RuntimeType::Mono(self)
     }
 
@@ -86,7 +101,11 @@ impl Runtime for Mono {
     }
 
     fn get_current_thread(&self) -> Result<UnityThread, RuntimeError> {
-        let function = &self.exports.clone().mono_thread_current.ok_or(RuntimeError::MissingFunction("mono_thread_current"))?;
+        let function = &self
+            .exports
+            .clone()
+            .mono_thread_current
+            .ok_or(RuntimeError::MissingFunction("mono_thread_current"))?;
         let thread = function();
 
         if thread.is_null() {
@@ -99,7 +118,11 @@ impl Runtime for Mono {
     }
 
     fn set_main_thread(&self, thread: UnityThread) -> Result<(), RuntimeError> {
-        let function = &self.exports.clone().mono_thread_set_main.ok_or(RuntimeError::MissingFunction("mono_thread_set_main"))?;
+        let function = &self
+            .exports
+            .clone()
+            .mono_thread_set_main
+            .ok_or(RuntimeError::MissingFunction("mono_thread_set_main"))?;
 
         if thread.inner.is_null() {
             return Err(RuntimeError::ReturnedNull("mono_thread_set_main"));
@@ -110,7 +133,11 @@ impl Runtime for Mono {
     }
 
     fn attach_to_thread(&self, thread: UnityDomain) -> Result<UnityThread, RuntimeError> {
-        let function = &self.exports.clone().mono_thread_attach.ok_or(RuntimeError::MissingFunction("mono_thread_attach"))?;
+        let function = &self
+            .exports
+            .clone()
+            .mono_thread_attach
+            .ok_or(RuntimeError::MissingFunction("mono_thread_attach"))?;
 
         if thread.inner.is_null() {
             return Err(RuntimeError::ReturnedNull("mono_thread_attach"));
@@ -128,7 +155,11 @@ impl Runtime for Mono {
     }
 
     fn add_internal_call(&self, name: String, func: MethodPointer) -> Result<(), RuntimeError> {
-        let function = &self.exports.clone().mono_add_internal_call.ok_or(RuntimeError::MissingFunction("mono_add_internal_call"))?;
+        let function = &self
+            .exports
+            .clone()
+            .mono_add_internal_call
+            .ok_or(RuntimeError::MissingFunction("mono_add_internal_call"))?;
 
         if name.is_empty() {
             return Err(RuntimeError::EmptyString);
@@ -145,7 +176,11 @@ impl Runtime for Mono {
         Ok(())
     }
 
-    fn install_assembly_hook(&self, hook_type: AssemblyHookType, func: MethodPointer) -> Result<(), RuntimeError> {
+    fn install_assembly_hook(
+        &self,
+        hook_type: AssemblyHookType,
+        func: MethodPointer,
+    ) -> Result<(), RuntimeError> {
         if func.is_null() {
             return Err(RuntimeError::NullPointer("func"));
         }
@@ -154,7 +189,8 @@ impl Runtime for Mono {
             AssemblyHookType::Preload => self.exports.clone().mono_install_assembly_preload_hook,
             AssemblyHookType::Load => self.exports.clone().mono_install_assembly_load_hook,
             AssemblyHookType::Search => self.exports.clone().mono_install_assembly_search_hook,
-        }.ok_or(RuntimeError::MissingFunction("mono_install_assembly_hook"))?;
+        }
+        .ok_or(RuntimeError::MissingFunction("mono_install_assembly_hook"))?;
 
         hook_func(func, std::ptr::null_mut());
 
@@ -162,7 +198,11 @@ impl Runtime for Mono {
     }
 
     fn get_domain(&self) -> Result<UnityDomain, RuntimeError> {
-        let function = &self.exports.clone().mono_get_root_domain.ok_or(RuntimeError::MissingFunction("mono_get_root_domain"))?;
+        let function = &self
+            .exports
+            .clone()
+            .mono_get_root_domain
+            .ok_or(RuntimeError::MissingFunction("mono_get_root_domain"))?;
 
         let domain = function();
 
@@ -176,7 +216,11 @@ impl Runtime for Mono {
     }
 
     fn create_debug_domain(&self, domain: UnityDomain) -> Result<(), RuntimeError> {
-        let function = &self.exports.clone().mono_debug_domain_create.ok_or(RuntimeError::MissingFunction("mono_debug_domain_create"))?;
+        let function = &self
+            .exports
+            .clone()
+            .mono_debug_domain_create
+            .ok_or(RuntimeError::MissingFunction("mono_debug_domain_create"))?;
 
         if domain.inner.is_null() {
             return Err(RuntimeError::NullPointer("domain"));
@@ -187,8 +231,17 @@ impl Runtime for Mono {
         Ok(())
     }
 
-    fn set_domain_config(&self, domain: UnityDomain, dir: String, name: String) -> Result<(), RuntimeError> {
-        let function = &self.exports.clone().mono_domain_set_config.ok_or(RuntimeError::MissingFunction("mono_domain_set_config"))?;
+    fn set_domain_config(
+        &self,
+        domain: UnityDomain,
+        dir: String,
+        name: String,
+    ) -> Result<(), RuntimeError> {
+        let function = &self
+            .exports
+            .clone()
+            .mono_domain_set_config
+            .ok_or(RuntimeError::MissingFunction("mono_domain_set_config"))?;
 
         if domain.inner.is_null() {
             return Err(RuntimeError::NullPointer("domain"));
@@ -213,7 +266,11 @@ impl Runtime for Mono {
     }
 
     fn string_from_raw(&self, name: *const i8) -> Result<UnityString, RuntimeError> {
-        let function = &self.exports.clone().mono_string_new.ok_or(RuntimeError::MissingFunction("mono_string_new"))?;
+        let function = &self
+            .exports
+            .clone()
+            .mono_string_new
+            .ok_or(RuntimeError::MissingFunction("mono_string_new"))?;
 
         if name.is_null() {
             return Err(RuntimeError::NullPointer("name"));
@@ -222,19 +279,26 @@ impl Runtime for Mono {
         let res = function(self.get_domain()?.inner.cast(), name);
 
         if res.is_null() {
-            return Err(RuntimeError::ReturnedNull("mono_string_new"))
+            return Err(RuntimeError::ReturnedNull("mono_string_new"));
         }
 
-        Ok(UnityString {
-            inner: res.cast()
-        })
+        Ok(UnityString { inner: res.cast() })
     }
 
-    fn invoke_method(&self, method: UnityMethod, obj: Option<UnityObject>, params: Option<&mut Vec<*mut c_void>>) -> Result<Option<UnityObject>, RuntimeError> {
-        let function = &self.exports.clone().mono_runtime_invoke.ok_or(RuntimeError::MissingFunction("mono_runtime_invoke"))?;
+    fn invoke_method(
+        &self,
+        method: UnityMethod,
+        obj: Option<UnityObject>,
+        params: Option<&mut Vec<*mut c_void>>,
+    ) -> Result<Option<UnityObject>, RuntimeError> {
+        let function = &self
+            .exports
+            .clone()
+            .mono_runtime_invoke
+            .ok_or(RuntimeError::MissingFunction("mono_runtime_invoke"))?;
 
         if method.inner.is_null() {
-            return Err(RuntimeError::NullPointer("method"))
+            return Err(RuntimeError::NullPointer("method"));
         }
 
         let exc: *mut MonoObject = std::ptr::null_mut();
@@ -248,48 +312,66 @@ impl Runtime for Mono {
             None => std::ptr::null_mut(),
         };
 
-        let result = function(method.inner.cast(), object.cast(), params, exc as *mut *mut MonoObject);
+        let result = function(
+            method.inner.cast(),
+            object.cast(),
+            params,
+            exc as *mut *mut MonoObject,
+        );
 
         match result.is_null() {
             true => Ok(Some(UnityObject {
                 inner: result.cast(),
             })),
-            false => Ok(None)
+            false => Ok(None),
         }
     }
 
     fn get_method_name(&self, method: UnityMethod) -> Result<String, RuntimeError> {
-        let function = &self.exports.clone().mono_method_get_name.ok_or(RuntimeError::MissingFunction("mono_method_get_name"))?;
+        let function = &self
+            .exports
+            .clone()
+            .mono_method_get_name
+            .ok_or(RuntimeError::MissingFunction("mono_method_get_name"))?;
 
         if method.inner.is_null() {
-            return Err(RuntimeError::NullPointer("method"))
+            return Err(RuntimeError::NullPointer("method"));
         }
 
         let name_c = function(method.inner.cast());
 
         if name_c.is_null() {
-            return Err(RuntimeError::ReturnedNull("mono_method_get_name"))
+            return Err(RuntimeError::ReturnedNull("mono_method_get_name"));
         }
 
-        let name = unsafe { 
-            CStr::from_ptr(name_c)
-        };
+        let name = unsafe { CStr::from_ptr(name_c) };
 
         Ok(name.to_str()?.to_string())
     }
 
     fn get_assemblies(&self) -> Result<Vec<UnityAssembly>, RuntimeError> {
-        let function = &self.exports.clone().mono_assembly_foreach.ok_or(RuntimeError::MissingFunction("mono_assembly_foreach"))?;
+        let function = &self
+            .exports
+            .clone()
+            .mono_assembly_foreach
+            .ok_or(RuntimeError::MissingFunction("mono_assembly_foreach"))?;
 
         let mut assemblies: Vec<UnityAssembly> = Vec::new();
 
-        function(enumerate_assemblies, &mut assemblies as *mut _ as *mut c_void);
+        function(
+            enumerate_assemblies,
+            &mut assemblies as *mut _ as *mut c_void,
+        );
 
         Ok(assemblies)
     }
 
     fn get_assembly_name(&self, assembly: UnityAssembly) -> Result<String, RuntimeError> {
-        let function = &self.exports.clone().mono_assembly_get_name.ok_or(RuntimeError::MissingFunction("mono_assembly_get_name"))?;
+        let function = &self
+            .exports
+            .clone()
+            .mono_assembly_get_name
+            .ok_or(RuntimeError::MissingFunction("mono_assembly_get_name"))?;
 
         if assembly.inner.is_null() {
             return Err(RuntimeError::NullPointer("assembly"));
@@ -301,9 +383,7 @@ impl Runtime for Mono {
             return Err(RuntimeError::ReturnedNull("mono_assembly_get_name"));
         }
 
-        let name = unsafe {
-            CStr::from_ptr((*name).name.cast())
-        }.to_str()?;
+        let name = unsafe { CStr::from_ptr((*name).name.cast()) }.to_str()?;
 
         Ok(name.to_string())
     }
@@ -315,6 +395,8 @@ extern "C" fn enumerate_assemblies(assembly: *mut MonoAssembly, data: *mut c_voi
             return;
         }
 
-        (*data.cast::<Vec<UnityAssembly>>()).push(UnityAssembly { inner: assembly.cast() });
+        (*data.cast::<Vec<UnityAssembly>>()).push(UnityAssembly {
+            inner: assembly.cast(),
+        });
     }
 }

@@ -1,9 +1,6 @@
 //! Handles logging across the entire package
 
-use std::{
-    io::Write,
-    path::PathBuf, error,
-};
+use std::{error, io::Write, path::PathBuf};
 
 use colored::{Color, Colorize};
 use thiserror::Error;
@@ -51,7 +48,7 @@ pub fn init() -> Result<(), Box<dyn error::Error>> {
 }
 
 /// the different log levels
-/// 
+///
 /// # Levels
 /// ```
 /// LogLevel::Info
@@ -109,28 +106,16 @@ pub fn log_console_file(level: LogLevel, message: &str) -> Result<(), LogError> 
                 message
             );
 
-            let file_string = format!(
-                "[{}] {}",
-                timestamp(),
-                message
-            );
+            let file_string = format!("[{}] {}", timestamp(), message);
 
             println!("{}", console_string);
             write(&file_string).map_err(|_| LogError::FailedToWriteToLog)?;
         }
         LogLevel::Warning => {
             //same as log, but all colors are yellow
-            let console_string = format!(
-                "[{}] [WARNING] {}",
-                timestamp(),
-                message
-            );
+            let console_string = format!("[{}] [WARNING] {}", timestamp(), message);
 
-            let file_string = format!(
-                "[{}] [WARNING] {}",
-                timestamp(),
-                message
-            );
+            let file_string = format!("[{}] [WARNING] {}", timestamp(), message);
 
             println!("{}", console_string.yellow());
 
@@ -139,11 +124,7 @@ pub fn log_console_file(level: LogLevel, message: &str) -> Result<(), LogError> 
         LogLevel::Error => {
             //same as log, but all colors are red
 
-            let log_string = format!(
-                "[{}] [ERROR] {}",
-                timestamp(),
-                message
-            );
+            let log_string = format!("[{}] [ERROR] {}", timestamp(), message);
 
             println!("{}", log_string.color(RED));
             write(&log_string).map_err(|_| LogError::FailedToWriteToLog)?;
@@ -164,7 +145,7 @@ fn timestamp() -> String {
 }
 
 /// Logs a message to the console and log file
-/// 
+///
 /// # Example
 /// ```
 /// log!("Hello World!")?;
@@ -190,7 +171,7 @@ macro_rules! log {
 }
 
 /// Logs a warning to the console and log file
-/// 
+///
 /// # Example
 /// ```
 /// warn!("Hello World!")?;
@@ -216,7 +197,7 @@ macro_rules! warn {
 }
 
 /// Logs an error to the console and log file
-/// 
+///
 /// # Example
 /// ```
 /// error!("Hello World!")?;
@@ -242,7 +223,7 @@ macro_rules! err {
 }
 
 /// Logs a debug message to the console and log file
-/// 
+///
 /// # Example
 /// ```
 /// debug!("Hello World!")?;

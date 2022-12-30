@@ -1,21 +1,23 @@
 use std::{
     error::Error,
     fs::{self, DirEntry},
-    path::{Path, PathBuf}, io,
+    path::{Path},
 };
 
 use anyhow::Result;
 use wasmtime::*;
 
-use crate::{log, err};
+use crate::{err, log};
 
 use super::exports;
 
+#[allow(dead_code)]
 pub struct FerrexMod {
     module: Module,
     instance: Instance,
 }
 
+#[allow(dead_code)]
 pub struct ModManager {
     engine: Engine,
     store: Store<()>,
@@ -37,14 +39,20 @@ impl ModManager {
 
         let directory = fs::read_dir(mods_dir)?;
 
-        let wasm_files: Vec<DirEntry> = directory.filter_map(Result::ok)
-        .filter_map(|d| d.path().to_str().and_then(|f| if f.ends_with(".wasm") { Some(d) } else { None })).collect();
+        let wasm_files: Vec<DirEntry> = directory
+            .filter_map(Result::ok)
+            .filter_map(|d| {
+                d.path()
+                    .to_str()
+                    .and_then(|f| if f.ends_with(".wasm") { Some(d) } else { None })
+            })
+            .collect();
 
         for file in wasm_files {
             log!("Loading mod from: {}", file.path().display())?;
             let fmod = FerrexMod::new(file.path(), &engine, &mut store);
             if fmod.is_err() {
-                err!("Failed to load mod: {}", fmod.err().unwrap().to_string());
+                err!("Failed to load mod: {}", fmod.err().unwrap().to_string())?;
                 continue;
             }
 
@@ -58,29 +66,31 @@ impl ModManager {
         Ok(ModManager {
             engine,
             store,
-            mods
+            mods,
         })
     }
 }
 
 impl FerrexMod {
-    fn new<P: AsRef<Path>>(path: P, engine: &Engine, mut store: impl AsContextMut<Data = ()>) -> Result<Self, Box<dyn Error>> {
+    fn new<P: AsRef<Path>>(
+        path: P,
+        engine: &Engine,
+        mut store: impl AsContextMut<Data = ()>,
+    ) -> Result<Self, Box<dyn Error>> {
         let module = Module::from_file(engine, path)?;
 
         let log_str = Func::wrap(&mut store, exports::log_str);
 
         let instance = Instance::new(&mut store, &module, &[log_str.into()])?;
 
-        let ferrex_mod = FerrexMod{
-            module,
-            instance
-        };
+        let ferrex_mod = FerrexMod { module, instance };
 
         Ok(ferrex_mod)
     }
 
     fn init(&mut self, mut store: impl AsContextMut) -> Result<(), Box<dyn Error>> {
-        let foo = self.instance
+        let foo = self
+            .instance
             .get_func(&mut store, "init")
             .expect("Mod doesn't export a init function!");
 

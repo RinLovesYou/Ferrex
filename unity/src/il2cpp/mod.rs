@@ -1,16 +1,29 @@
 //! TODO
 
-use std::{error, path::PathBuf, ffi::{CString, CStr}, ptr::addr_of_mut};
-
-use libc::c_void;
-use thiserror::Error;
-
-use crate::{
-    join_dll_path,
-    libs::{self, NativeLibrary, NativeMethod}, runtime::{Runtime, RuntimeError, RuntimeType}, common::{thread::UnityThread, string::UnityString, domain::UnityDomain, method::{MethodPointer, UnityMethod}, object::UnityObject, assembly::UnityAssembly}, mono::AssemblyHookType,
+use std::{
+    ffi::{CStr, CString},
+    path::PathBuf,
+    ptr::addr_of_mut,
 };
 
-use self::{exports::Il2CppExports, types::{Il2CppThread, Il2CppObject}};
+use libc::c_void;
+
+use crate::{
+    common::{
+        assembly::UnityAssembly,
+        domain::UnityDomain,
+        method::{MethodPointer, UnityMethod},
+        object::UnityObject,
+        string::UnityString,
+        thread::UnityThread,
+    },
+    join_dll_path,
+    libs::{self, NativeLibrary, NativeMethod},
+    mono::AssemblyHookType,
+    runtime::{Runtime, RuntimeError, RuntimeType},
+};
+
+use self::{exports::Il2CppExports, types::Il2CppObject};
 
 pub mod exports;
 pub mod types;
@@ -42,7 +55,7 @@ impl Il2Cpp {
 }
 
 impl Runtime for Il2Cpp {
-    fn get_type(&self) -> RuntimeType {
+    fn get_type(&self) -> RuntimeType<'_> {
         RuntimeType::Il2Cpp(self)
     }
 
@@ -57,33 +70,45 @@ impl Runtime for Il2Cpp {
     }
 
     fn get_current_thread(&self) -> Result<UnityThread, RuntimeError> {
-        let function = &self.exports.clone().il2cpp_thread_current.ok_or(RuntimeError::MissingFunction("il2cpp_thread_current"))?;
+        let function = &self
+            .exports
+            .clone()
+            .il2cpp_thread_current
+            .ok_or(RuntimeError::MissingFunction("il2cpp_thread_current"))?;
         let thread = function();
 
         if thread.is_null() {
             return Err(RuntimeError::ReturnedNull("il2cpp_thread_current"));
         }
 
-        Ok(UnityThread { 
-            inner: thread.cast() 
+        Ok(UnityThread {
+            inner: thread.cast(),
         })
     }
 
     /// this function doesn't exist in il2cpp, it just forwards to il2cpp_thread_attach
     fn set_main_thread(&self, thread: UnityThread) -> Result<(), RuntimeError> {
-        let function = &self.exports.clone().il2cpp_thread_attach.ok_or(RuntimeError::MissingFunction("il2cpp_thread_attach"))?;
+        let function = &self
+            .exports
+            .clone()
+            .il2cpp_thread_attach
+            .ok_or(RuntimeError::MissingFunction("il2cpp_thread_attach"))?;
 
         if thread.inner.is_null() {
             return Err(RuntimeError::ReturnedNull("il2cpp_thread_attach").into());
         }
 
-        function(thread.inner.cast());
+        let _ = function(thread.inner.cast());
 
         Ok(())
     }
 
     fn attach_to_thread(&self, thread: UnityDomain) -> Result<UnityThread, RuntimeError> {
-        let function = &self.exports.clone().il2cpp_thread_attach.ok_or(RuntimeError::MissingFunction("il2cpp_thread_attach"))?;
+        let function = &self
+            .exports
+            .clone()
+            .il2cpp_thread_attach
+            .ok_or(RuntimeError::MissingFunction("il2cpp_thread_attach"))?;
 
         if thread.inner.is_null() {
             return Err(RuntimeError::ReturnedNull("il2cpp_thread_attach").into());
@@ -101,7 +126,11 @@ impl Runtime for Il2Cpp {
     }
 
     fn add_internal_call(&self, name: String, func: MethodPointer) -> Result<(), RuntimeError> {
-        let function = &self.exports.clone().il2cpp_add_internal_call.ok_or(RuntimeError::MissingFunction("il2cpp_add_internal_call"))?;
+        let function = &self
+            .exports
+            .clone()
+            .il2cpp_add_internal_call
+            .ok_or(RuntimeError::MissingFunction("il2cpp_add_internal_call"))?;
 
         if name.is_empty() {
             return Err(RuntimeError::EmptyString);
@@ -118,16 +147,28 @@ impl Runtime for Il2Cpp {
         Ok(())
     }
 
-    fn install_assembly_hook(&self, _hook_type: AssemblyHookType, _func: MethodPointer) -> Result<(), RuntimeError> {
-        return Err(RuntimeError::NotImplemented("install_assembly_hook are mono only functions"));
+    fn install_assembly_hook(
+        &self,
+        _hook_type: AssemblyHookType,
+        _func: MethodPointer,
+    ) -> Result<(), RuntimeError> {
+        return Err(RuntimeError::NotImplemented(
+            "install_assembly_hook are mono only functions",
+        ));
     }
 
     fn create_debug_domain(&self, _domain: UnityDomain) -> Result<(), RuntimeError> {
-        return Err(RuntimeError::NotImplemented("create_debug_domain is a mono only function"));
+        return Err(RuntimeError::NotImplemented(
+            "create_debug_domain is a mono only function",
+        ));
     }
-    
+
     fn get_domain(&self) -> Result<UnityDomain, RuntimeError> {
-        let function = &self.exports.clone().il2cpp_domain_get.ok_or(RuntimeError::MissingFunction("il2cpp_domain_get"))?;
+        let function = &self
+            .exports
+            .clone()
+            .il2cpp_domain_get
+            .ok_or(RuntimeError::MissingFunction("il2cpp_domain_get"))?;
 
         let domain = function();
 
@@ -140,22 +181,33 @@ impl Runtime for Il2Cpp {
         })
     }
 
-    fn set_domain_config(&self, domain: UnityDomain, dir: String, name: String) -> Result<(), RuntimeError> {
-        return Err(RuntimeError::NotImplemented("set_domain_config is a mono only function"));
+    fn set_domain_config(
+        &self,
+        _domain: UnityDomain,
+        _dir: String,
+        _name: String,
+    ) -> Result<(), RuntimeError> {
+        return Err(RuntimeError::NotImplemented(
+            "set_domain_config is a mono only function",
+        ));
     }
 
     fn new_string(&self, name: String) -> Result<UnityString, RuntimeError> {
         if name.is_empty() {
             return Err(RuntimeError::EmptyString);
         }
-        
+
         let native_str = CString::new(name.as_str())?;
 
         self.string_from_raw(native_str.as_ptr())
     }
 
     fn string_from_raw(&self, name: *const i8) -> Result<UnityString, RuntimeError> {
-        let function = &self.exports.clone().il2cpp_string_new.ok_or(RuntimeError::MissingFunction("il2cpp_string_new"))?;
+        let function = &self
+            .exports
+            .clone()
+            .il2cpp_string_new
+            .ok_or(RuntimeError::MissingFunction("il2cpp_string_new"))?;
 
         if name.is_null() {
             return Err(RuntimeError::NullPointer("name"));
@@ -164,19 +216,26 @@ impl Runtime for Il2Cpp {
         let res = function(name);
 
         if res.is_null() {
-            return Err(RuntimeError::ReturnedNull("il2cpp_string_new"))
+            return Err(RuntimeError::ReturnedNull("il2cpp_string_new"));
         }
 
-        Ok(UnityString {
-            inner: res.cast()
-        })
+        Ok(UnityString { inner: res.cast() })
     }
 
-    fn invoke_method(&self, method: UnityMethod, obj: Option<UnityObject>, params: Option<&mut Vec<*mut c_void>>) -> Result<Option<UnityObject>, RuntimeError> {
-        let function = &self.exports.clone().il2cpp_runtime_invoke.ok_or(RuntimeError::MissingFunction("il2cpp_runtime_invoke"))?;
+    fn invoke_method(
+        &self,
+        method: UnityMethod,
+        obj: Option<UnityObject>,
+        params: Option<&mut Vec<*mut c_void>>,
+    ) -> Result<Option<UnityObject>, RuntimeError> {
+        let function = &self
+            .exports
+            .clone()
+            .il2cpp_runtime_invoke
+            .ok_or(RuntimeError::MissingFunction("il2cpp_runtime_invoke"))?;
 
         if method.inner.is_null() {
-            return Err(RuntimeError::NullPointer("method"))
+            return Err(RuntimeError::NullPointer("method"));
         }
 
         let exc: *mut Il2CppObject = std::ptr::null_mut();
@@ -190,32 +249,39 @@ impl Runtime for Il2Cpp {
             None => std::ptr::null_mut(),
         };
 
-        let result = function(method.inner.cast(), object.cast(), params, exc as *mut *mut Il2CppObject);
+        let result = function(
+            method.inner.cast(),
+            object.cast(),
+            params,
+            exc as *mut *mut Il2CppObject,
+        );
 
         match result.is_null() {
             true => Ok(Some(UnityObject {
                 inner: result.cast(),
             })),
-            false => Ok(None)
+            false => Ok(None),
         }
     }
 
     fn get_method_name(&self, method: UnityMethod) -> Result<String, RuntimeError> {
-        let function = &self.exports.clone().il2cpp_method_get_name.ok_or(RuntimeError::MissingFunction("il2cpp_method_get_name"))?;
+        let function = &self
+            .exports
+            .clone()
+            .il2cpp_method_get_name
+            .ok_or(RuntimeError::MissingFunction("il2cpp_method_get_name"))?;
 
         if method.inner.is_null() {
-            return Err(RuntimeError::NullPointer("method"))
+            return Err(RuntimeError::NullPointer("method"));
         }
 
         let name_c = function(method.inner.cast());
 
         if name_c.is_null() {
-            return Err(RuntimeError::ReturnedNull("il2cpp_method_get_name"))
+            return Err(RuntimeError::ReturnedNull("il2cpp_method_get_name"));
         }
 
-        let name = unsafe { 
-            CStr::from_ptr(name_c)
-        };
+        let name = unsafe { CStr::from_ptr(name_c) };
 
         Ok(name.to_str()?.to_string())
     }
@@ -224,7 +290,7 @@ impl Runtime for Il2Cpp {
         Ok(Vec::new())
     }
 
-    fn get_assembly_name(&self, assembly: UnityAssembly) -> Result<String, RuntimeError> {
+    fn get_assembly_name(&self, _assembly: UnityAssembly) -> Result<String, RuntimeError> {
         Ok("stub".to_string())
     }
 }
