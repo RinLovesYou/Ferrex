@@ -1,4 +1,7 @@
-use std::error::Error;
+use std::{error::Error};
+
+
+use unity_rs::runtime::{Runtime, self};
 
 use crate::{hooking, log, logging::logger};
 
@@ -14,6 +17,19 @@ pub fn init() -> Result<(), Box<dyn Error>> {
     hooking::invoke::hook_init()?;
 
     Ok(())
+}
+
+#[allow(dead_code)]
+static mut RUNTIME: Option<Box<dyn Runtime>> = None;
+
+pub fn get_runtime() -> Result<&'static Box<dyn Runtime>, Box<dyn Error>> {
+    unsafe {
+        if RUNTIME.is_none() {
+            RUNTIME = Some(runtime::get_runtime()?)
+        }
+
+        Ok(RUNTIME.as_ref().ok_or("Failed to get runtime")?)
+    }
 }
 
 fn check_unity() -> Result<bool, Box<dyn Error>> {

@@ -9,7 +9,7 @@ use wasmtime::*;
 
 use crate::{err, log};
 
-use super::exports;
+use super::exports::{self};
 
 #[allow(dead_code)]
 pub struct FerrexMod {
@@ -80,8 +80,11 @@ impl FerrexMod {
         let module = Module::from_file(engine, path)?;
 
         let log_str = Func::wrap(&mut store, exports::log_str);
+        let get_assemblies = Func::wrap(&mut store, exports::get_assemblies);
+        let get_assembly_count = Func::wrap(&mut store, exports::get_assembly_count);
+        let get_assembly_name = Func::wrap(&mut store, exports::get_assembly_name);
 
-        let instance = Instance::new(&mut store, &module, &[log_str.into()])?;
+        let instance = Instance::new(&mut store, &module, &[get_assembly_count.into(), get_assemblies.into(), log_str.into(), get_assembly_name.into()])?;
 
         let ferrex_mod = FerrexMod { module, instance };
 

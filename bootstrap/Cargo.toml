@@ -18,6 +18,7 @@ colored = "*"
 anyhow = "*"
 lazy_static = "*"
 codegen = "0.1.3"
+bytemuck = "*"
 
 [lib]
 name = "Bootstrap"

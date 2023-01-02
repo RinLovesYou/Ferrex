@@ -6,7 +6,8 @@ use unity_rs::{
     runtime::{Runtime, RuntimeType},
 };
 
-use crate::{errors::hookerr::HookError, internal_failure, log, mods::manager::ModManager};
+
+use crate::{errors::hookerr::HookError, internal_failure, log, mods::manager::ModManager, core};
 
 use super::hook;
 
@@ -66,13 +67,13 @@ fn invoke_detour_inner(
         original(method, object, params, exception)
     };
 
-    let runtime = unity_rs::runtime::get_runtime()?;
+    let runtime = core::get_runtime()?;
 
     let unity_method = UnityMethod {
         inner: method.cast(),
     };
 
-    let name = unity_method.get_name(&runtime)?;
+    let name = unity_method.get_name(runtime)?;
 
     let is_old_mono = match runtime.get_type() {
         RuntimeType::Mono(mono) => mono.is_old,
