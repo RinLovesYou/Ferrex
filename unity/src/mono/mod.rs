@@ -57,6 +57,9 @@ pub struct Mono {
     pub exports: MonoExports,
 }
 
+unsafe impl Send for Mono {}
+unsafe impl Sync for Mono {}
+
 impl Mono {
     pub fn new(mono_path: PathBuf) -> Result<Self, Box<dyn error::Error>> {
         if !mono_path.exists() {

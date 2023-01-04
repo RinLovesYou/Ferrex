@@ -125,7 +125,7 @@ pub trait Runtime {
 }
 
 /// looks up the runtime
-pub fn get_runtime() -> Result<Box<dyn Runtime>, RuntimeError> {
+pub fn get_runtime() -> Result<Box<dyn Runtime + Send>, RuntimeError> {
     let exe_path = std::env::current_exe()?;
     if !is_unity(&exe_path)? {
         return Err(RuntimeError::NotUnity);
@@ -141,10 +141,10 @@ pub fn get_runtime() -> Result<Box<dyn Runtime>, RuntimeError> {
 
     if let Ok(mono_path) = mono {
         let mono = Mono::new(mono_path)?;
-        Ok(Box::new(mono))
+        Ok(Box::new(mono) as Box<dyn Runtime + Send>)
     } else {
         let il2cpp = Il2Cpp::new(base_path)?;
-        Ok(Box::new(il2cpp))
+        Ok(Box::new(il2cpp) as Box<dyn Runtime + Send>)
     }
 }
 

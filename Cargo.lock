@@ -162,6 +162,7 @@ dependencies = [
  "unity-rs",
  "wasmtime",
  "wasmtime-wasi",
+ "winapi",
 ]
 
 [[package]]
@@ -2063,6 +2064,7 @@ dependencies = [
  "libc",
  "libloading",
  "thiserror",
+ "winapi",
 ]
 
 [[package]]

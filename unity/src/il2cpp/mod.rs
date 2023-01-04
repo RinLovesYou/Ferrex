@@ -34,6 +34,9 @@ pub struct Il2Cpp {
     pub exports: Il2CppExports,
 }
 
+unsafe impl Send for Il2Cpp {}
+unsafe impl Sync for Il2Cpp {}
+
 impl Il2Cpp {
     pub fn new(base_path: PathBuf) -> Result<Self, RuntimeError> {
         let game_assembly_path = join_dll_path!(base_path, "GameAssembly");

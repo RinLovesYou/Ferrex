@@ -15,7 +15,7 @@ type InvokeFn = fn(Address, Address, *mut Address, *mut Address) -> Address;
 
 static mut INVOKE_ORIGINAL: Option<InvokeFn> = None;
 
-pub fn hook_init() -> Result<(), HookError> {
+pub fn hook_invoke() -> Result<(), HookError> {
     let runtime = unity_rs::runtime::get_runtime()?;
 
     log!("Running under {}", runtime.get_type())?;

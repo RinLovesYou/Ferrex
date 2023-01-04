@@ -14,7 +14,8 @@ pub fn init() -> Result<(), Box<dyn Error>> {
 
     log!("Initializing Ferrex")?;
 
-    hooking::invoke::hook_init()?;
+    hooking::init::hook_init()?;
+    //hooking::invoke::hook_invoke()?;
 
     Ok(())
 }
