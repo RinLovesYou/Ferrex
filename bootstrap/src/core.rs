@@ -6,16 +6,17 @@ use unity_rs::runtime::{Runtime, self};
 use crate::{hooking, log, logging::logger};
 
 pub fn init() -> Result<(), Box<dyn Error>> {
+    logger::init()?;
+
     if !check_unity()? {
         return Ok(());
     }
 
-    logger::init()?;
 
     log!("Initializing Ferrex")?;
 
-    hooking::init::hook_init()?;
-    //hooking::invoke::hook_invoke()?;
+    //hooking::init::hook_init()?;
+    hooking::invoke::hook_invoke()?;
 
     Ok(())
 }

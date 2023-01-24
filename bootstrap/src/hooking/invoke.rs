@@ -43,7 +43,7 @@ pub fn hook_invoke() -> Result<(), HookError> {
     Ok(())
 }
 
-fn invoke_detour(
+extern "C" fn invoke_detour(
     method: Address,
     object: Address,
     params: *mut Address,

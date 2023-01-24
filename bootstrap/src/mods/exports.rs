@@ -5,6 +5,7 @@ use wasmtime::Caller;
 
 use crate::{err, log, core};
 
+#[no_mangle]
 pub fn log_str(caller: Caller<'_, ()>, ptr: i32, len: i32) {
     log_str_inner(caller, ptr, len).unwrap_or_else(|e| {
         let _ = err!("Failed to invoke log: {}", e.to_string());
@@ -17,6 +18,7 @@ pub fn get_assemblies(caller: Caller<'_, ()>, ptr: i32, len: i32) {
     });
 }
 
+#[no_mangle]
 pub fn get_assembly_count() -> i32 {
     get_assembly_count_inner().unwrap_or_else(|e| {
         let _ = err!("Failed to invoke log: {}", e.to_string());

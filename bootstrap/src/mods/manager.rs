@@ -6,6 +6,7 @@ use std::{
 
 use anyhow::Result;
 use wasmtime::*;
+use wasmtime_wasi::add_to_linker;
 
 use crate::{err, log};
 
@@ -36,6 +37,17 @@ impl ModManager {
         let engine = Engine::default();
         let mut store = Store::new(&engine, ());
         let mut mods: Vec<FerrexMod> = Vec::new();
+        let mut linker = Linker::new(&engine);
+
+        let get_assembly_count = Func::wrap(&mut store, exports::get_assembly_count);
+        let log_str = Func::wrap(&mut store, exports::log_str);
+        let get_assemblies = Func::wrap(&mut store, exports::get_assemblies);
+        let get_assembly_name = Func::wrap(&mut store, exports::get_assembly_name);
+
+        linker.define("env", "fx_log_str", log_str)?;
+        linker.define("env", "fx_get_assembly_count", get_assembly_count)?;
+        linker.define("env", "fx_get_assemblies", get_assemblies)?;
+        linker.define("env", "fx_get_assembly_name", get_assembly_name)?;
 
         let directory = fs::read_dir(mods_dir)?;
 
@@ -50,7 +62,7 @@ impl ModManager {
 
         for file in wasm_files {
             log!("Loading mod from: {}", file.path().display())?;
-            let fmod = FerrexMod::new(file.path(), &engine, &mut store);
+            let fmod = FerrexMod::new(file.path(), &engine, &mut linker, &mut store);
             if fmod.is_err() {
                 err!("Failed to load mod: {}", fmod.err().unwrap().to_string())?;
                 continue;
@@ -75,16 +87,12 @@ impl FerrexMod {
     fn new<P: AsRef<Path>>(
         path: P,
         engine: &Engine,
+        linker: &mut Linker<()>,
         mut store: impl AsContextMut<Data = ()>,
     ) -> Result<Self, Box<dyn Error>> {
         let module = Module::from_file(engine, path)?;
 
-        let log_str = Func::wrap(&mut store, exports::log_str);
-        let get_assemblies = Func::wrap(&mut store, exports::get_assemblies);
-        let get_assembly_count = Func::wrap(&mut store, exports::get_assembly_count);
-        let get_assembly_name = Func::wrap(&mut store, exports::get_assembly_name);
-
-        let instance = Instance::new(&mut store, &module, &[get_assembly_count.into(), get_assemblies.into(), log_str.into(), get_assembly_name.into()])?;
+        let instance = linker.instantiate(&mut store, &module)?;
 
         let ferrex_mod = FerrexMod { module, instance };
 

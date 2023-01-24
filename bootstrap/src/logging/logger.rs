@@ -41,7 +41,7 @@ pub fn init() -> Result<(), Box<dyn error::Error>> {
     let log_path = log_path().map_err(|_| LogError::FailedToGetBasePath)?;
 
     if log_path.exists() {
-        std::fs::remove_file(&log_path).map_err(|_| LogError::FailedToDeleteOldLog)?;
+        std::fs::remove_file(&log_path);
     }
 
     Ok(())
