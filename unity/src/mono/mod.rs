@@ -15,7 +15,7 @@ use crate::{
         method::{MethodPointer, UnityMethod},
         object::UnityObject,
         string::UnityString,
-        thread::UnityThread,
+        thread::UnityThread, image::UnityImage, class::UnityClass, property::UnityProperty,
     },
     libs::{self, NativeLibrary, NativeMethod},
     runtime::{Runtime, RuntimeError, RuntimeType},
@@ -120,7 +120,7 @@ impl Runtime for Mono {
         })
     }
 
-    fn set_main_thread(&self, thread: UnityThread) -> Result<(), RuntimeError> {
+    fn set_main_thread(&self, thread: &UnityThread) -> Result<(), RuntimeError> {
         let function = &self
             .exports
             .clone()
@@ -135,7 +135,7 @@ impl Runtime for Mono {
         Ok(())
     }
 
-    fn attach_to_thread(&self, thread: UnityDomain) -> Result<UnityThread, RuntimeError> {
+    fn attach_to_thread(&self, thread: &UnityDomain) -> Result<UnityThread, RuntimeError> {
         let function = &self
             .exports
             .clone()
@@ -218,7 +218,7 @@ impl Runtime for Mono {
         })
     }
 
-    fn create_debug_domain(&self, domain: UnityDomain) -> Result<(), RuntimeError> {
+    fn create_debug_domain(&self, domain: &UnityDomain) -> Result<(), RuntimeError> {
         let function = &self
             .exports
             .clone()
@@ -236,7 +236,7 @@ impl Runtime for Mono {
 
     fn set_domain_config(
         &self,
-        domain: UnityDomain,
+        domain: &UnityDomain,
         dir: String,
         name: String,
     ) -> Result<(), RuntimeError> {
@@ -290,8 +290,8 @@ impl Runtime for Mono {
 
     fn invoke_method(
         &self,
-        method: UnityMethod,
-        obj: Option<UnityObject>,
+        method: &UnityMethod,
+        obj: Option<&UnityObject>,
         params: Option<&mut Vec<*mut c_void>>,
     ) -> Result<Option<UnityObject>, RuntimeError> {
         let function = &self
@@ -330,7 +330,7 @@ impl Runtime for Mono {
         }
     }
 
-    fn get_method_name(&self, method: UnityMethod) -> Result<String, RuntimeError> {
+    fn get_method_name(&self, method: &UnityMethod) -> Result<String, RuntimeError> {
         let function = &self
             .exports
             .clone()
@@ -369,7 +369,7 @@ impl Runtime for Mono {
         Ok(assemblies)
     }
 
-    fn get_assembly_name(&self, assembly: UnityAssembly) -> Result<String, RuntimeError> {
+    fn get_assembly_name(&self, assembly: &UnityAssembly) -> Result<String, RuntimeError> {
         let function = &self
             .exports
             .clone()
@@ -389,6 +389,166 @@ impl Runtime for Mono {
         let name = unsafe { CStr::from_ptr((*name).name.cast()) }.to_str()?;
 
         Ok(name.to_string())
+    }
+
+    fn open_assembly(&self, name: String) -> Result<UnityAssembly, RuntimeError> {
+        let function = &self
+            .exports
+            .clone()
+            .mono_domain_assembly_open
+            .ok_or(RuntimeError::MissingFunction("mono_domain_assembly_open"))?;
+
+        let assembly = function(self.get_domain()?.inner.cast(), CString::new(name)?.as_ptr());
+
+        if assembly.is_null() {
+            return Err(RuntimeError::ReturnedNull("mono_domain_assembly_open"));
+        }
+
+        Ok(UnityAssembly { inner: assembly.cast() })
+    }
+
+    fn assembly_get_image(&self, assembly: &UnityAssembly) -> Result<UnityImage, RuntimeError> {
+        let function = &self
+            .exports
+            .clone()
+            .mono_assembly_get_image
+            .ok_or(RuntimeError::MissingFunction("mono_assembly_get_image"))?;
+
+        let image = function(assembly.inner.cast());
+
+        if image.is_null() {
+            return Err(RuntimeError::ReturnedNull("mono_assembly_get_image"));
+        }
+
+        Ok(UnityImage { inner: image.cast() })
+    }
+
+    fn get_class(&self, assembly: &UnityAssembly, namespace: String, name: String) -> Result<UnityClass, RuntimeError> {
+        let image = self.assembly_get_image(assembly)?;
+
+        let function = &self
+            .exports
+            .clone()
+            .mono_class_from_name
+            .ok_or(RuntimeError::MissingFunction("mono_class_from_name"))?;
+
+        let class = function(image.inner.cast(), CString::new(namespace)?.as_ptr(), CString::new(name)?.as_ptr());
+
+        if class.is_null() {
+            return Err(RuntimeError::ReturnedNull("mono_class_from_name"));
+        }
+
+        Ok(UnityClass { inner: class.cast() })
+    }
+
+    fn get_class_name(&self, class: &UnityClass) -> Result<String, RuntimeError> {
+        let function = &self
+            .exports
+            .clone()
+            .mono_class_get_name
+            .ok_or(RuntimeError::MissingFunction("mono_class_get_name"))?;
+
+        if class.inner.is_null() {
+            return Err(RuntimeError::NullPointer("class"));
+        }
+
+        let name = function(class.inner.cast());
+
+        if name.is_null() {
+            return Err(RuntimeError::ReturnedNull("mono_assembly_get_name"));
+        }
+
+        let name = unsafe { CStr::from_ptr(name) }.to_str()?;
+
+        Ok(name.to_string())
+    }
+
+    fn get_property(&self, class: &UnityClass, name: &str) -> Result<UnityProperty, RuntimeError> {
+        let function = &self
+            .exports
+            .clone()
+            .mono_class_get_property_from_name
+            .ok_or(RuntimeError::MissingFunction("mono_class_get_property_from_name"))?;
+
+        if class.inner.is_null() {
+            return Err(RuntimeError::NullPointer("class"));
+        }
+
+        let prop = function(class.inner.cast(), CString::new(name)?.as_ptr());
+
+        if prop.is_null() {
+            return Err(RuntimeError::ReturnedNull("mono_class_get_property_from_name"));
+        }
+
+        Ok(UnityProperty {
+            inner: prop.cast()
+        })
+    }
+
+    fn get_property_name(&self, prop: &UnityProperty) -> Result<String, RuntimeError> {
+        let function = &self
+            .exports
+            .clone()
+            .mono_property_get_name
+            .ok_or(RuntimeError::MissingFunction("mono_property_get_name"))?;
+
+        if prop.inner.is_null() {
+            return Err(RuntimeError::NullPointer("property"));
+        }
+
+        let name = function(prop.inner.cast());
+
+        if name.is_null() {
+            return Err(RuntimeError::ReturnedNull("mono_property_get_name"));
+        }
+
+        let name = unsafe { CStr::from_ptr(name) }.to_str()?;
+
+        Ok(name.to_string())
+    }
+
+    fn get_property_get_method(&self, prop: &UnityProperty) -> Result<UnityMethod, RuntimeError> {
+        let function = &self
+            .exports
+            .clone()
+            .mono_property_get_get_method
+            .ok_or(RuntimeError::MissingFunction("mono_property_get_get_method"))?;
+
+        if prop.inner.is_null() {
+            return Err(RuntimeError::NullPointer("property"));
+        }
+
+        let method = function(prop.inner.cast());
+
+        if method.is_null() {
+            return Err(RuntimeError::ReturnedNull("mono_property_get_get_method"));
+        }
+
+        Ok(UnityMethod { 
+            inner: method.cast() 
+        })
+    }
+
+    fn get_property_set_method(&self, prop: &UnityProperty) -> Result<UnityMethod, RuntimeError> {
+        let function = &self
+            .exports
+            .clone()
+            .mono_property_get_set_method
+            .ok_or(RuntimeError::MissingFunction("mono_property_get_set_method"))?;
+
+        if prop.inner.is_null() {
+            return Err(RuntimeError::NullPointer("property"));
+        }
+
+        let method = function(prop.inner.cast());
+
+        if method.is_null() {
+            return Err(RuntimeError::ReturnedNull("mono_property_get_set_method"));
+        }
+
+        Ok(UnityMethod { 
+            inner: method.cast() 
+        })
     }
 }
 

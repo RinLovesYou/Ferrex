@@ -10,15 +10,15 @@ ctor = "0.1.26"
 #unity-rs = { git = "https://github.com/RinLovesYou/unity-rs.git" }
 unity-rs = { path = "../unity" }
 dobby-rs = { git = "https://github.com/RinLovesYou/dobby-rs" }
-wasmtime = { version = "4.0", features = ["cranelift", "component-model"] }
-wasmtime-wasi = "*"
 thiserror = "*"
 chrono = "*"
 colored = "*"
-anyhow = "*"
 lazy_static = "*"
 codegen = "0.1.3"
 bytemuck = "*"
+anyhow = "*"
+scotch-host = "0.1"
+bincode = "2.0.0-rc.2"
 
 
 [target.'cfg(windows)'.dependencies]

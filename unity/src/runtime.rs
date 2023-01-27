@@ -18,7 +18,7 @@ use crate::{
         method::{MethodPointer, UnityMethod},
         object::UnityObject,
         string::UnityString,
-        thread::UnityThread,
+        thread::UnityThread, class::UnityClass, image::UnityImage, property::UnityProperty,
     },
     il2cpp::Il2Cpp,
     libs::{self},
@@ -95,19 +95,19 @@ pub trait Runtime {
     fn get_type(&self) -> RuntimeType<'_>;
     fn get_domain(&self) -> Result<UnityDomain, RuntimeError>;
     fn get_current_thread(&self) -> Result<UnityThread, RuntimeError>;
-    fn set_main_thread(&self, thread: UnityThread) -> Result<(), RuntimeError>;
-    fn attach_to_thread(&self, thread: UnityDomain) -> Result<UnityThread, RuntimeError>;
+    fn set_main_thread(&self, thread: &UnityThread) -> Result<(), RuntimeError>;
+    fn attach_to_thread(&self, thread: &UnityDomain) -> Result<UnityThread, RuntimeError>;
     fn add_internal_call(&self, name: String, func: MethodPointer) -> Result<(), RuntimeError>;
     fn install_assembly_hook(
         &self,
         hook_type: AssemblyHookType,
         func: MethodPointer,
     ) -> Result<(), RuntimeError>;
-    fn create_debug_domain(&self, domain: UnityDomain) -> Result<(), RuntimeError>;
+    fn create_debug_domain(&self, domain: &UnityDomain) -> Result<(), RuntimeError>;
     fn get_export_ptr(&self, name: &str) -> Result<MethodPointer, RuntimeError>;
     fn set_domain_config(
         &self,
-        domain: UnityDomain,
+        domain: &UnityDomain,
         dir: String,
         name: String,
     ) -> Result<(), RuntimeError>;
@@ -115,13 +115,21 @@ pub trait Runtime {
     fn string_from_raw(&self, name: *const i8) -> Result<UnityString, RuntimeError>;
     fn invoke_method(
         &self,
-        method: UnityMethod,
-        obj: Option<UnityObject>,
+        method: &UnityMethod,
+        obj: Option<&UnityObject>,
         params: Option<&mut Vec<*mut c_void>>,
     ) -> Result<Option<UnityObject>, RuntimeError>;
-    fn get_method_name(&self, method: UnityMethod) -> Result<String, RuntimeError>;
+    fn get_method_name(&self, method: &UnityMethod) -> Result<String, RuntimeError>;
     fn get_assemblies(&self) -> Result<Vec<UnityAssembly>, RuntimeError>;
-    fn get_assembly_name(&self, assembly: UnityAssembly) -> Result<String, RuntimeError>;
+    fn get_assembly_name(&self, assembly: &UnityAssembly) -> Result<String, RuntimeError>;
+    fn open_assembly(&self, name: String) -> Result<UnityAssembly, RuntimeError>;
+    fn assembly_get_image(&self, assembly: &UnityAssembly) -> Result<UnityImage, RuntimeError>;
+    fn get_class(&self, assembly: &UnityAssembly, namespace: String, name: String) -> Result<UnityClass, RuntimeError>;
+    fn get_class_name(&self, class: &UnityClass) -> Result<String, RuntimeError>;
+    fn get_property(&self, class: &UnityClass, name: &str) -> Result<UnityProperty, RuntimeError>;
+    fn get_property_name(&self, prop: &UnityProperty) -> Result<String, RuntimeError>;
+    fn get_property_get_method(&self, prop: &UnityProperty) -> Result<UnityMethod, RuntimeError>;
+    fn get_property_set_method(&self, prop: &UnityProperty) -> Result<UnityMethod, RuntimeError>;
 }
 
 /// looks up the runtime

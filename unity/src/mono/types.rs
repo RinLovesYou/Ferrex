@@ -27,6 +27,12 @@ pub struct MonoClass {}
 #[repr(C)]
 pub struct MonoAssembly {}
 
+/// a property
+#[derive(Debug)]
+#[repr(C)]
+pub struct MonoProperty {}
+
+
 /// a mono image
 #[derive(Debug)]
 #[repr(C)]

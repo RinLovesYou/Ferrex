@@ -6,7 +6,7 @@ use crate::libs::{LibError, NativeLibrary, NativeMethod};
 
 use super::types::{
     AssemblyName, MonoAssembly, MonoClass, MonoDomain, MonoImage, MonoMethod, MonoObject,
-    MonoString, MonoThread,
+    MonoString, MonoThread, MonoProperty,
 };
 
 type GFunc = extern "C" fn(*mut MonoAssembly, *mut c_void);
@@ -53,6 +53,11 @@ pub struct MonoExports {
         Option<NativeMethod<fn(*mut MonoDomain, *mut MonoAssembly) -> *mut MonoObject>>,
     pub mono_assembly_foreach: Option<NativeMethod<fn(GFunc, *mut c_void)>>,
     pub mono_assembly_get_name: Option<NativeMethod<fn(*mut MonoAssembly) -> *mut AssemblyName>>,
+    pub mono_class_get_name: Option<NativeMethod<fn(*mut MonoClass) -> *const c_char>>,
+    pub mono_class_get_property_from_name: Option<NativeMethod<fn(*mut MonoClass, *const c_char) -> *mut MonoProperty>>,
+    pub mono_property_get_name: Option<NativeMethod<fn(*mut MonoProperty) -> *const c_char>>,
+    pub mono_property_get_get_method: Option<NativeMethod<fn(*mut MonoProperty) -> *mut MonoMethod>>,
+    pub mono_property_get_set_method: Option<NativeMethod<fn(*mut MonoProperty) -> *mut MonoMethod>>,
 }
 
 impl MonoExports {
@@ -106,6 +111,11 @@ impl MonoExports {
             ),
             mono_assembly_foreach: Some(lib.sym("mono_assembly_foreach")?),
             mono_assembly_get_name: Some(lib.sym("mono_assembly_get_name")?),
+            mono_class_get_name: Some(lib.sym("mono_class_get_name")?),
+            mono_class_get_property_from_name: Some(lib.sym("mono_class_get_property_from_name")?),
+            mono_property_get_name: Some(lib.sym("mono_property_get_name")?),
+            mono_property_get_get_method: Some(lib.sym("mono_property_get_get_method")?),
+            mono_property_get_set_method: Some(lib.sym("mono_property_get_set_method")?),
         })
     }
 }

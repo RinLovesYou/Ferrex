@@ -9,6 +9,7 @@ edition = "2021"
 thiserror = "1.0.37"
 libc = "0.2.137"
 libloading = "0.7.4"
+bincode = "2.0.0-rc.2"
 
 
 [target.'cfg(windows)'.dependencies]

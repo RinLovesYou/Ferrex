@@ -1,28 +1,22 @@
 use std::{
     error::Error,
     fs::{self, DirEntry},
-    path::{Path},
 };
 
-use anyhow::Result;
-use wasmtime::*;
-use wasmtime_wasi::add_to_linker;
+use scotch_host::{WasmPlugin, make_imports, make_exports, guest_functions};
 
-use crate::{err, log};
+use crate::log;
 
-use super::exports::{self};
+use super::exports;
 
-#[allow(dead_code)]
-pub struct FerrexMod {
-    module: Module,
-    instance: Instance,
+#[guest_functions]
+extern "C" {
+    // The name must match with the name of the plugin function.
+    pub fn init();
 }
 
-#[allow(dead_code)]
 pub struct ModManager {
-    engine: Engine,
-    store: Store<()>,
-    mods: Vec<FerrexMod>,
+    pub plugins: Vec<WasmPlugin>
 }
 
 impl ModManager {
@@ -34,20 +28,6 @@ impl ModManager {
         if !mods_dir.exists() {
             fs::create_dir(&mods_dir)?;
         }
-        let engine = Engine::default();
-        let mut store = Store::new(&engine, ());
-        let mut mods: Vec<FerrexMod> = Vec::new();
-        let mut linker = Linker::new(&engine);
-
-        let get_assembly_count = Func::wrap(&mut store, exports::get_assembly_count);
-        let log_str = Func::wrap(&mut store, exports::log_str);
-        let get_assemblies = Func::wrap(&mut store, exports::get_assemblies);
-        let get_assembly_name = Func::wrap(&mut store, exports::get_assembly_name);
-
-        linker.define("env", "fx_log_str", log_str)?;
-        linker.define("env", "fx_get_assembly_count", get_assembly_count)?;
-        linker.define("env", "fx_get_assemblies", get_assemblies)?;
-        linker.define("env", "fx_get_assembly_name", get_assembly_name)?;
 
         let directory = fs::read_dir(mods_dir)?;
 
@@ -60,57 +40,43 @@ impl ModManager {
             })
             .collect();
 
+        let mut plugins = Vec::new();
+
         for file in wasm_files {
             log!("Loading mod from: {}", file.path().display())?;
-            let fmod = FerrexMod::new(file.path(), &engine, &mut linker, &mut store);
-            if fmod.is_err() {
-                err!("Failed to load mod: {}", fmod.err().unwrap().to_string())?;
-                continue;
-            }
+            let file = fs::read(file.path())?;
+            let plugin = WasmPlugin::builder()
+                .with_state(())
+                .from_binary(&file)?
+                .with_imports(make_imports![
+                    exports::logger::fx_log_str,
 
-            mods.push(fmod?);
-        }
+                    exports::domain::fx_get_domain, 
 
-        for fmod in mods.iter_mut() {
-            fmod.init(&mut store)?;
+                    exports::assemblies::fx_get_assemblies,
+                    exports::assemblies::fx_get_assembly,
+                    exports::assemblies::fx_get_assembly_name,
+
+                    exports::classes::fx_get_class,
+                    exports::classes::fx_get_class_name,
+
+                    exports::properties::fx_get_property,
+                    exports::properties::fx_get_property_name,
+                    exports::properties::fx_get_property_value,
+                    exports::properties::fx_set_property_value,
+
+                    exports::objects::fx_unbox_i32,
+                ])
+                .with_exports(make_exports![init])
+                .finish()?;
+
+            plugin.function_unwrap::<init>()()?;
+
+            plugins.push(plugin);
         }
 
         Ok(ModManager {
-            engine,
-            store,
-            mods,
+            plugins
         })
-    }
-}
-
-impl FerrexMod {
-    fn new<P: AsRef<Path>>(
-        path: P,
-        engine: &Engine,
-        linker: &mut Linker<()>,
-        mut store: impl AsContextMut<Data = ()>,
-    ) -> Result<Self, Box<dyn Error>> {
-        let module = Module::from_file(engine, path)?;
-
-        let instance = linker.instantiate(&mut store, &module)?;
-
-        let ferrex_mod = FerrexMod { module, instance };
-
-        Ok(ferrex_mod)
-    }
-
-    fn init(&mut self, mut store: impl AsContextMut) -> Result<(), Box<dyn Error>> {
-        let foo = self
-            .instance
-            .get_func(&mut store, "init")
-            .expect("Mod doesn't export a init function!");
-
-        // ... or we can make a static assertion about its signature and call it.
-        // Our first call here can fail if the signatures don't match, and then the
-        // second call can fail if the function traps (like the `match` above).
-        let foo = foo.typed::<(), ()>(&mut store)?;
-        foo.call(&mut store, ())?;
-
-        Ok(())
     }
 }

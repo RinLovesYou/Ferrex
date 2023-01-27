@@ -24,6 +24,6 @@ impl Clone for UnityMethod {
 
 impl UnityMethod {
     pub fn get_name(&self, runtime: &Box<dyn Runtime>) -> Result<String, RuntimeError> {
-        runtime.get_method_name(self.to_owned())
+        runtime.get_method_name(self)
     }
 }

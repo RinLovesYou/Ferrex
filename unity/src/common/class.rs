@@ -6,46 +6,46 @@ use bincode::{Encode, Decode};
 
 use crate::runtime::{Runtime, RuntimeError};
 
-use super::image::UnityImage;
+use super::property::UnityProperty;
 
-/// Represents a C# Assembly
+/// Represents a C# Class
 #[derive(Debug, Copy)]
-pub struct UnityAssembly {
+pub struct UnityClass {
     /// The inner pointer to the Tread
     pub inner: *mut c_void,
 }
 
-unsafe impl Send for UnityAssembly {}
-unsafe impl Sync for UnityAssembly {}
+unsafe impl Send for UnityClass {}
+unsafe impl Sync for UnityClass {}
 
-impl Clone for UnityAssembly {
-    fn clone(&self) -> UnityAssembly {
-        UnityAssembly { ..*self }
+impl Clone for UnityClass {
+    fn clone(&self) -> UnityClass {
+        UnityClass { ..*self }
     }
 }
 
-impl Encode for UnityAssembly {
+impl Encode for UnityClass {
     fn encode<E: bincode::enc::Encoder>(&self, encoder: &mut E) -> Result<(), bincode::error::EncodeError> {
         (self.inner as i32).encode(encoder)
     }
 }
 
-impl Decode for UnityAssembly {
+impl Decode for UnityClass {
     fn decode<D: bincode::de::Decoder>(decoder: &mut D) -> Result<Self, bincode::error::DecodeError> {
         let ptr = i32::decode(decoder)?;
 
-        Ok(UnityAssembly {
+        Ok(UnityClass {
             inner: ptr as usize as *mut c_void
         })
     }
 }
 
-impl UnityAssembly {
+impl UnityClass {
     pub fn get_name(&self, runtime: &Box<dyn Runtime>) -> Result<String, RuntimeError> {
-        runtime.get_assembly_name(self)
+        runtime.get_class_name(self)
     }
 
-    pub fn get_image(&self, runtime: &Box<dyn Runtime>) -> Result<UnityImage, RuntimeError> {
-        runtime.assembly_get_image(self)
+    pub fn get_property(&self, runtime: &Box<dyn Runtime>, name: &str) -> Result<UnityProperty, RuntimeError> {
+        runtime.get_property(self, name)
     }
 }

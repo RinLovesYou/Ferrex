@@ -15,7 +15,7 @@ use crate::{
         method::{MethodPointer, UnityMethod},
         object::UnityObject,
         string::UnityString,
-        thread::UnityThread,
+        thread::UnityThread, image::UnityImage, class::UnityClass, property::UnityProperty,
     },
     join_dll_path,
     libs::{self, NativeLibrary, NativeMethod},
@@ -90,7 +90,7 @@ impl Runtime for Il2Cpp {
     }
 
     /// this function doesn't exist in il2cpp, it just forwards to il2cpp_thread_attach
-    fn set_main_thread(&self, thread: UnityThread) -> Result<(), RuntimeError> {
+    fn set_main_thread(&self, thread: &UnityThread) -> Result<(), RuntimeError> {
         let function = &self
             .exports
             .clone()
@@ -106,7 +106,7 @@ impl Runtime for Il2Cpp {
         Ok(())
     }
 
-    fn attach_to_thread(&self, thread: UnityDomain) -> Result<UnityThread, RuntimeError> {
+    fn attach_to_thread(&self, thread: &UnityDomain) -> Result<UnityThread, RuntimeError> {
         let function = &self
             .exports
             .clone()
@@ -160,7 +160,7 @@ impl Runtime for Il2Cpp {
         ));
     }
 
-    fn create_debug_domain(&self, _domain: UnityDomain) -> Result<(), RuntimeError> {
+    fn create_debug_domain(&self, _domain: &UnityDomain) -> Result<(), RuntimeError> {
         return Err(RuntimeError::NotImplemented(
             "create_debug_domain is a mono only function",
         ));
@@ -186,7 +186,7 @@ impl Runtime for Il2Cpp {
 
     fn set_domain_config(
         &self,
-        _domain: UnityDomain,
+        _domain: &UnityDomain,
         _dir: String,
         _name: String,
     ) -> Result<(), RuntimeError> {
@@ -227,8 +227,8 @@ impl Runtime for Il2Cpp {
 
     fn invoke_method(
         &self,
-        method: UnityMethod,
-        obj: Option<UnityObject>,
+        method: &UnityMethod,
+        obj: Option<&UnityObject>,
         params: Option<&mut Vec<*mut c_void>>,
     ) -> Result<Option<UnityObject>, RuntimeError> {
         let function = &self
@@ -267,7 +267,7 @@ impl Runtime for Il2Cpp {
         }
     }
 
-    fn get_method_name(&self, method: UnityMethod) -> Result<String, RuntimeError> {
+    fn get_method_name(&self, method: &UnityMethod) -> Result<String, RuntimeError> {
         let function = &self
             .exports
             .clone()
@@ -293,7 +293,39 @@ impl Runtime for Il2Cpp {
         Ok(Vec::new())
     }
 
-    fn get_assembly_name(&self, _assembly: UnityAssembly) -> Result<String, RuntimeError> {
+    fn get_assembly_name(&self, _assembly: &UnityAssembly) -> Result<String, RuntimeError> {
         Ok("stub".to_string())
+    }
+
+    fn open_assembly(&self, _name: String) -> Result<UnityAssembly, RuntimeError> {
+        Err(RuntimeError::NotImplemented("open_assembly"))
+    }
+
+    fn assembly_get_image(&self, _assembly: &UnityAssembly) -> Result<UnityImage, RuntimeError> {
+        Err(RuntimeError::NotImplemented("assembly_get_image"))
+    }
+
+    fn get_class(&self, _assembly: &UnityAssembly, _namespace: String, _name: String) -> Result<UnityClass, RuntimeError> {
+        Err(RuntimeError::NotImplemented("get_class"))
+    }
+
+    fn get_class_name(&self, _class: &UnityClass) -> Result<String, RuntimeError> {
+        Ok("TODO".to_string())
+    }
+
+    fn get_property(&self, _class: &UnityClass, _name: &str) -> Result<UnityProperty, RuntimeError> {
+        Err(RuntimeError::NotImplemented("get_property"))
+    }
+
+    fn get_property_name(&self, _prop: &UnityProperty) -> Result<String, RuntimeError> {
+        Err(RuntimeError::NotImplemented("get_property_name"))
+    }
+
+    fn get_property_get_method(&self, _prop: &UnityProperty) -> Result<UnityMethod, RuntimeError> {
+        Err(RuntimeError::NotImplemented("get_property_get_get_method"))
+    }
+
+    fn get_property_set_method(&self, _prop: &UnityProperty) -> Result<UnityMethod, RuntimeError> {
+        Err(RuntimeError::NotImplemented("get_property_get_set_method"))
     }
 }
