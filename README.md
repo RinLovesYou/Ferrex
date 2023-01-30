@@ -36,7 +36,7 @@
   <h3 align="center">Ferrex</h3>
 
   <p align="center">
-    A Cross-Platform Unity Modding framework written in pure Rust, utilizing WebAssembly
+    A Cross-Platform Unity Modding framework written in pure Rust
     <br />
     <a href="https://github.com/RinLovesYou/Ferrex"><strong>Explore the docs »</strong></a>
     <br />
@@ -72,7 +72,6 @@ TODO
 ## Roadmap
 
 - [x] Injection
-- [x] Wasm POC
 - [ ] Modding API
 
 See the [open issues](https://github.com/RinLovesYou/Ferrex/issues) for a full list of proposed features (and known issues).
