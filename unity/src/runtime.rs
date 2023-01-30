@@ -130,6 +130,8 @@ pub trait Runtime {
     fn get_property_name(&self, prop: &UnityProperty) -> Result<String, RuntimeError>;
     fn get_property_get_method(&self, prop: &UnityProperty) -> Result<UnityMethod, RuntimeError>;
     fn get_property_set_method(&self, prop: &UnityProperty) -> Result<UnityMethod, RuntimeError>;
+    fn get_unmanaged_thunk(&self, method: &UnityMethod) -> Result<MethodPointer, RuntimeError>;
+    fn get_classes(&self, asm: &UnityAssembly) -> Result<Vec<UnityClass>, RuntimeError>;
 }
 
 /// looks up the runtime

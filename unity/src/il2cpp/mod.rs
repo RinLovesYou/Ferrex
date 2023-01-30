@@ -328,4 +328,12 @@ impl Runtime for Il2Cpp {
     fn get_property_set_method(&self, _prop: &UnityProperty) -> Result<UnityMethod, RuntimeError> {
         Err(RuntimeError::NotImplemented("get_property_get_set_method"))
     }
+
+    fn get_unmanaged_thunk(&self, method: &UnityMethod) -> Result<MethodPointer, RuntimeError> {
+        if method.inner.is_null() {
+            return Err(RuntimeError::NullPointer("method"));
+        }
+
+        Ok(method.inner)
+    }
 }

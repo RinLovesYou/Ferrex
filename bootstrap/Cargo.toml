@@ -14,11 +14,12 @@ thiserror = "*"
 chrono = "*"
 colored = "*"
 lazy_static = "*"
-codegen = "0.1.3"
+codegen = "*"
 bytemuck = "*"
 anyhow = "*"
 scotch-host = "0.1"
 bincode = "2.0.0-rc.2"
+libloading = "*"
 
 
 [target.'cfg(windows)'.dependencies]

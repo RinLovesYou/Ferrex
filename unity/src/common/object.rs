@@ -5,7 +5,8 @@ use std::ffi::c_void;
 use bincode::{Encode, Decode};
 
 /// Represents a C# Object
-#[derive(Debug)]
+#[derive(Debug, Copy)]
+#[repr(C)]
 pub struct UnityObject {
     /// The inner pointer to the Tread
     pub inner: *mut c_void,

@@ -7,7 +7,8 @@ use crate::runtime::{Runtime, RuntimeError};
 pub type MethodPointer = *mut c_void;
 
 /// Represents a C# Method
-#[derive(Debug)]
+#[derive(Debug, Copy)]
+#[repr(C)]
 pub struct UnityMethod {
     /// The inner pointer to the Tread
     pub inner: *mut c_void,

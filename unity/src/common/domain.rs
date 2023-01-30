@@ -5,7 +5,8 @@ use std::ffi::c_void;
 use bincode::{Encode, Decode};
 
 /// Represents a C# Domain
-#[derive(Debug)]
+#[derive(Debug, Copy)]
+#[repr(C)]
 pub struct UnityDomain {
     /// The inner pointer to the Domain
     pub inner: *mut c_void,

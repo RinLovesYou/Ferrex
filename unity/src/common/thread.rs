@@ -3,7 +3,8 @@
 use std::ffi::c_void;
 
 /// Represents a C# Thread
-#[derive(Debug)]
+#[derive(Debug, Copy)]
+#[repr(C)]
 pub struct UnityThread {
     /// The inner pointer to the Tread
     pub inner: *mut c_void,

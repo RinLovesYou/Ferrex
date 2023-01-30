@@ -6,10 +6,11 @@ use bincode::{Encode, Decode};
 
 use crate::runtime::{Runtime, RuntimeError};
 
-use super::image::UnityImage;
+use super::{image::UnityImage, class::UnityClass};
 
 /// Represents a C# Assembly
 #[derive(Debug, Copy)]
+#[repr(C)]
 pub struct UnityAssembly {
     /// The inner pointer to the Tread
     pub inner: *mut c_void,
@@ -47,5 +48,9 @@ impl UnityAssembly {
 
     pub fn get_image(&self, runtime: &Box<dyn Runtime>) -> Result<UnityImage, RuntimeError> {
         runtime.assembly_get_image(self)
+    }
+
+    pub fn get_class(&self, runtime: &Box<dyn Runtime>, namespace: &str, name: &str) -> Result<UnityClass, RuntimeError> {
+        runtime.get_class(self, namespace.to_string(), name.to_string())
     }
 }

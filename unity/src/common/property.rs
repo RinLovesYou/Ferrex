@@ -9,7 +9,8 @@ use crate::runtime::{Runtime, RuntimeError};
 use super::object::UnityObject;
 
 /// Represents a C# Property
-#[derive(Debug)]
+#[derive(Debug, Copy)]
+#[repr(C)]
 pub struct UnityProperty {
     /// The inner pointer to the Property
     pub inner: *mut c_void,

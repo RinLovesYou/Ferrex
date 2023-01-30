@@ -8,7 +8,8 @@ use crate::{
 };
 
 /// Represents a C# String
-#[derive(Debug)]
+#[derive(Debug, Copy)]
+#[repr(C)]
 pub struct UnityString {
     /// The inner pointer to the Tread
     pub inner: *mut c_void,

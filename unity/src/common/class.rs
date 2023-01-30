@@ -10,6 +10,7 @@ use super::property::UnityProperty;
 
 /// Represents a C# Class
 #[derive(Debug, Copy)]
+#[repr(C)]
 pub struct UnityClass {
     /// The inner pointer to the Tread
     pub inner: *mut c_void,

@@ -23,7 +23,6 @@ mod bindgen;
 
 use ctor::ctor;
 
-#[no_mangle]
 #[ctor]
 fn init(){
     core::init().unwrap_or_else(|e| {

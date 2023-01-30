@@ -58,6 +58,7 @@ pub struct MonoExports {
     pub mono_property_get_name: Option<NativeMethod<fn(*mut MonoProperty) -> *const c_char>>,
     pub mono_property_get_get_method: Option<NativeMethod<fn(*mut MonoProperty) -> *mut MonoMethod>>,
     pub mono_property_get_set_method: Option<NativeMethod<fn(*mut MonoProperty) -> *mut MonoMethod>>,
+    pub mono_method_get_unmanaged_thunk: Option<NativeMethod<fn(*mut MonoMethod) -> *mut c_void>>,
 }
 
 impl MonoExports {
@@ -116,6 +117,7 @@ impl MonoExports {
             mono_property_get_name: Some(lib.sym("mono_property_get_name")?),
             mono_property_get_get_method: Some(lib.sym("mono_property_get_get_method")?),
             mono_property_get_set_method: Some(lib.sym("mono_property_get_set_method")?),
+            mono_method_get_unmanaged_thunk: Some(lib.sym("mono_method_get_unmanaged_thunk")?),
         })
     }
 }

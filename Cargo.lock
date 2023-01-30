@@ -143,6 +143,7 @@ dependencies = [
  "ctor",
  "dobby-rs",
  "lazy_static",
+ "libloading",
  "scotch-host",
  "thiserror",
  "unity-rs",

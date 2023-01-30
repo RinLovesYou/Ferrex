@@ -1,6 +1,6 @@
 //! Handles logging across the entire package
 
-use std::{error, io::Write, path::PathBuf};
+use std::{error::{self, Error}, io::Write, path::PathBuf};
 
 use colored::{Color, Colorize};
 use thiserror::Error;
@@ -57,6 +57,7 @@ pub fn init() -> Result<(), Box<dyn error::Error>> {
 /// LogLevel::Debug
 #[allow(dead_code)]
 #[derive(Debug)]
+#[repr(u8)]
 pub enum LogLevel {
     /// Informational, always printed to console
     Info,
@@ -64,6 +65,19 @@ pub enum LogLevel {
     Warning,
     /// Error, always printed to console
     Error,
+}
+
+impl std::convert::TryFrom<u8> for LogLevel {
+    type Error = Box<dyn Error>;
+
+    fn try_from(value: u8) -> Result<Self, <LogLevel as std::convert::TryFrom<u8>>::Error> {
+        match value {
+            0 => Ok(LogLevel::Info),
+            1 => Ok(LogLevel::Warning),
+            2 => Ok(LogLevel::Error),
+            _ => Err("Invalid value for enum `LogLevel` possible: [1, 2, 3]".into())
+        }
+    }
 }
 
 static RED: Color = Color::TrueColor {

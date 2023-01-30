@@ -550,6 +550,26 @@ impl Runtime for Mono {
             inner: method.cast() 
         })
     }
+
+    fn get_unmanaged_thunk(&self, method: &UnityMethod) -> Result<MethodPointer, RuntimeError> {
+        let function = &self
+            .exports
+            .clone()
+            .mono_method_get_unmanaged_thunk
+            .ok_or(RuntimeError::MissingFunction("mono_method_get_unmanaged_thunk"))?;
+
+        if method.inner.is_null() {
+            return Err(RuntimeError::NullPointer("method"));
+        }
+
+        let method = function(method.inner.cast());
+
+        if method.is_null() {
+            return Err(RuntimeError::ReturnedNull("mono_method_get_unmanaged_thunk"));
+        }
+
+        Ok(method)
+    }
 }
 
 extern "C" fn enumerate_assemblies(assembly: *mut MonoAssembly, data: *mut c_void) {
