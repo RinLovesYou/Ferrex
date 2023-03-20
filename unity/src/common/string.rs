@@ -3,7 +3,7 @@
 use std::ffi::c_void;
 use crate::{
     runtime::{
-        RuntimeError, Runtime
+        RuntimeError, FerrexRuntime
     },
 };
 
@@ -25,11 +25,11 @@ impl Clone for UnityString {
 }
 
 impl UnityString {
-    pub fn from_string(runtime: Box<dyn Runtime>, from: impl Into<String>) -> Result<UnityString, RuntimeError> {
-        runtime.new_string(from.into())
+    pub fn from_string(from: &str, runtime: &FerrexRuntime) -> Result<UnityString, RuntimeError> {
+        runtime.new_string(from)
     }
 
-    pub fn from_raw(runtime: Box<dyn Runtime>, from: *const i8) -> Result<UnityString, RuntimeError> {
+    pub fn from_raw(from: *const i8, runtime: &FerrexRuntime) -> Result<UnityString, RuntimeError> {
         runtime.string_from_raw(from)
     }
 }

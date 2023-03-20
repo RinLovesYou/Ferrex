@@ -2,8 +2,6 @@
 
 use std::{ffi::c_void, error::Error};
 
-use bincode::{Encode, Decode};
-
 use crate::runtime::{Runtime, RuntimeError};
 
 use super::object::UnityObject;
@@ -22,22 +20,6 @@ unsafe impl Sync for UnityProperty {}
 impl Clone for UnityProperty {
     fn clone(&self) -> UnityProperty {
         UnityProperty { ..*self }
-    }
-}
-
-impl Encode for UnityProperty {
-    fn encode<E: bincode::enc::Encoder>(&self, encoder: &mut E) -> Result<(), bincode::error::EncodeError> {
-        (self.inner as i32).encode(encoder)
-    }
-}
-
-impl Decode for UnityProperty {
-    fn decode<D: bincode::de::Decoder>(decoder: &mut D) -> Result<Self, bincode::error::DecodeError> {
-        let ptr = i32::decode(decoder)?;
-
-        Ok(UnityProperty {
-            inner: ptr as usize as *mut c_void
-        })
     }
 }
 

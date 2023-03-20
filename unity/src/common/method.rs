@@ -2,7 +2,9 @@
 
 use std::ffi::c_void;
 
-use crate::runtime::{Runtime, RuntimeError};
+use crate::runtime::{RuntimeError, FerrexRuntime};
+
+use super::object::UnityObject;
 
 pub type MethodPointer = *mut c_void;
 
@@ -24,7 +26,18 @@ impl Clone for UnityMethod {
 }
 
 impl UnityMethod {
-    pub fn get_name(&self, runtime: &Box<dyn Runtime>) -> Result<String, RuntimeError> {
+    pub fn new(pointer: MethodPointer) -> Result<Self, RuntimeError> {
+        if pointer.is_null() {
+            return Err(RuntimeError::NullPointer("pointer"));
+        }
+
+        Ok(UnityMethod { inner: pointer })
+    }
+    pub fn get_name(&self, runtime: &FerrexRuntime) -> Result<String, RuntimeError> {
         runtime.get_method_name(self)
+    }
+
+    pub fn invoke(&self, object: Option<&UnityObject>, params: Option<&mut Vec<*mut c_void>>, runtime: &FerrexRuntime) -> Result<Option<UnityObject>, RuntimeError> {
+        runtime.invoke_method(self, object, params)
     }
 }

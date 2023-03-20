@@ -2,11 +2,9 @@
 
 use std::ffi::c_void;
 
-use bincode::{Encode, Decode};
+use crate::runtime::{RuntimeError, FerrexRuntime};
 
-use crate::runtime::{Runtime, RuntimeError};
-
-use super::property::UnityProperty;
+use super::{property::UnityProperty, method::UnityMethod};
 
 /// Represents a C# Class
 #[derive(Debug, Copy)]
@@ -25,28 +23,16 @@ impl Clone for UnityClass {
     }
 }
 
-impl Encode for UnityClass {
-    fn encode<E: bincode::enc::Encoder>(&self, encoder: &mut E) -> Result<(), bincode::error::EncodeError> {
-        (self.inner as i32).encode(encoder)
-    }
-}
-
-impl Decode for UnityClass {
-    fn decode<D: bincode::de::Decoder>(decoder: &mut D) -> Result<Self, bincode::error::DecodeError> {
-        let ptr = i32::decode(decoder)?;
-
-        Ok(UnityClass {
-            inner: ptr as usize as *mut c_void
-        })
-    }
-}
-
 impl UnityClass {
-    pub fn get_name(&self, runtime: &Box<dyn Runtime>) -> Result<String, RuntimeError> {
+    pub fn get_name(&self, runtime: &FerrexRuntime) -> Result<String, RuntimeError> {
         runtime.get_class_name(self)
     }
 
-    pub fn get_property(&self, runtime: &Box<dyn Runtime>, name: &str) -> Result<UnityProperty, RuntimeError> {
+    pub fn get_property(&self, name: &str, runtime: &FerrexRuntime) -> Result<UnityProperty, RuntimeError> {
         runtime.get_property(self, name)
+    }
+
+    pub fn get_method(&self, name: &str, args: i32, runtime: &FerrexRuntime) -> Result<UnityMethod, RuntimeError> {
+        runtime.get_method(name, args, self)
     }
 }

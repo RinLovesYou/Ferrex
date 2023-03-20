@@ -128,7 +128,7 @@ impl Runtime for Il2Cpp {
         })
     }
 
-    fn add_internal_call(&self, name: String, func: MethodPointer) -> Result<(), RuntimeError> {
+    fn add_internal_call(&self, name: &str, func: MethodPointer) -> Result<(), RuntimeError> {
         let function = &self
             .exports
             .clone()
@@ -143,7 +143,7 @@ impl Runtime for Il2Cpp {
             return Err(RuntimeError::NullPointer("func"));
         }
 
-        let name = CString::new(name.as_str())?;
+        let name = CString::new(name)?;
 
         function(name.as_ptr(), func);
 
@@ -187,20 +187,20 @@ impl Runtime for Il2Cpp {
     fn set_domain_config(
         &self,
         _domain: &UnityDomain,
-        _dir: String,
-        _name: String,
+        _dir: &str,
+        _name: &str,
     ) -> Result<(), RuntimeError> {
         return Err(RuntimeError::NotImplemented(
             "set_domain_config is a mono only function",
         ));
     }
 
-    fn new_string(&self, name: String) -> Result<UnityString, RuntimeError> {
+    fn new_string(&self, name: &str) -> Result<UnityString, RuntimeError> {
         if name.is_empty() {
             return Err(RuntimeError::EmptyString);
         }
 
-        let native_str = CString::new(name.as_str())?;
+        let native_str = CString::new(name)?;
 
         self.string_from_raw(native_str.as_ptr())
     }
@@ -297,7 +297,7 @@ impl Runtime for Il2Cpp {
         Ok("stub".to_string())
     }
 
-    fn open_assembly(&self, _name: String) -> Result<UnityAssembly, RuntimeError> {
+    fn open_assembly(&self, _name: &str) -> Result<UnityAssembly, RuntimeError> {
         Err(RuntimeError::NotImplemented("open_assembly"))
     }
 
@@ -335,5 +335,13 @@ impl Runtime for Il2Cpp {
         }
 
         Ok(method.inner)
+    }
+
+    fn get_method(&self, _name: &str, _args: i32, _class: &UnityClass) -> Result<UnityMethod, RuntimeError> {
+        Err(RuntimeError::NotImplemented("get_method"))
+    }
+
+    fn get_assembly_object(&self, _assembly: &UnityAssembly) -> Result<UnityObject, RuntimeError>  {
+        Err(RuntimeError::NotImplemented("get_assembly_object"))
     }
 }

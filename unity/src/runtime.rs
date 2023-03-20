@@ -26,6 +26,8 @@ use crate::{
     utils,
 };
 
+pub type FerrexRuntime = Box<dyn Runtime + Send + Sync>;
+
 #[derive(Debug, Error)]
 pub enum RuntimeError {
     #[error(transparent)]
@@ -97,7 +99,7 @@ pub trait Runtime {
     fn get_current_thread(&self) -> Result<UnityThread, RuntimeError>;
     fn set_main_thread(&self, thread: &UnityThread) -> Result<(), RuntimeError>;
     fn attach_to_thread(&self, thread: &UnityDomain) -> Result<UnityThread, RuntimeError>;
-    fn add_internal_call(&self, name: String, func: MethodPointer) -> Result<(), RuntimeError>;
+    fn add_internal_call(&self, name: &str, func: MethodPointer) -> Result<(), RuntimeError>;
     fn install_assembly_hook(
         &self,
         hook_type: AssemblyHookType,
@@ -108,10 +110,10 @@ pub trait Runtime {
     fn set_domain_config(
         &self,
         domain: &UnityDomain,
-        dir: String,
-        name: String,
+        dir: &str,
+        name: &str,
     ) -> Result<(), RuntimeError>;
-    fn new_string(&self, name: String) -> Result<UnityString, RuntimeError>;
+    fn new_string(&self, name: &str) -> Result<UnityString, RuntimeError>;
     fn string_from_raw(&self, name: *const i8) -> Result<UnityString, RuntimeError>;
     fn invoke_method(
         &self,
@@ -122,7 +124,7 @@ pub trait Runtime {
     fn get_method_name(&self, method: &UnityMethod) -> Result<String, RuntimeError>;
     fn get_assemblies(&self) -> Result<Vec<UnityAssembly>, RuntimeError>;
     fn get_assembly_name(&self, assembly: &UnityAssembly) -> Result<String, RuntimeError>;
-    fn open_assembly(&self, name: String) -> Result<UnityAssembly, RuntimeError>;
+    fn open_assembly(&self, name: &str) -> Result<UnityAssembly, RuntimeError>;
     fn assembly_get_image(&self, assembly: &UnityAssembly) -> Result<UnityImage, RuntimeError>;
     fn get_class(&self, assembly: &UnityAssembly, namespace: String, name: String) -> Result<UnityClass, RuntimeError>;
     fn get_class_name(&self, class: &UnityClass) -> Result<String, RuntimeError>;
@@ -131,11 +133,12 @@ pub trait Runtime {
     fn get_property_get_method(&self, prop: &UnityProperty) -> Result<UnityMethod, RuntimeError>;
     fn get_property_set_method(&self, prop: &UnityProperty) -> Result<UnityMethod, RuntimeError>;
     fn get_unmanaged_thunk(&self, method: &UnityMethod) -> Result<MethodPointer, RuntimeError>;
-    fn get_classes(&self, asm: &UnityAssembly) -> Result<Vec<UnityClass>, RuntimeError>;
+    fn get_method(&self, name: &str, args: i32, class: &UnityClass) -> Result<UnityMethod, RuntimeError>;
+    fn get_assembly_object(&self, assembly: &UnityAssembly) -> Result<UnityObject, RuntimeError>;
 }
 
 /// looks up the runtime
-pub fn get_runtime() -> Result<Box<dyn Runtime + Send>, RuntimeError> {
+pub fn get_runtime() -> Result<FerrexRuntime, RuntimeError> {
     let exe_path = std::env::current_exe()?;
     if !is_unity(&exe_path)? {
         return Err(RuntimeError::NotUnity);
@@ -151,10 +154,10 @@ pub fn get_runtime() -> Result<Box<dyn Runtime + Send>, RuntimeError> {
 
     if let Ok(mono_path) = mono {
         let mono = Mono::new(mono_path)?;
-        Ok(Box::new(mono) as Box<dyn Runtime + Send>)
+        Ok(Box::new(mono) as Box<dyn Runtime + Send + Sync>)
     } else {
         let il2cpp = Il2Cpp::new(base_path)?;
-        Ok(Box::new(il2cpp) as Box<dyn Runtime + Send>)
+        Ok(Box::new(il2cpp) as Box<dyn Runtime + Send + Sync>)
     }
 }
 

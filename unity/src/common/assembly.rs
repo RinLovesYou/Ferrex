@@ -1,12 +1,10 @@
 //! TODO
 
-use std::ffi::c_void;
+use std::ffi::{c_void, OsStr};
 
-use bincode::{Encode, Decode};
+use crate::runtime::{FerrexRuntime, RuntimeError};
 
-use crate::runtime::{Runtime, RuntimeError};
-
-use super::{image::UnityImage, class::UnityClass};
+use super::{class::UnityClass, image::UnityImage};
 
 /// Represents a C# Assembly
 #[derive(Debug, Copy)]
@@ -25,32 +23,40 @@ impl Clone for UnityAssembly {
     }
 }
 
-impl Encode for UnityAssembly {
-    fn encode<E: bincode::enc::Encoder>(&self, encoder: &mut E) -> Result<(), bincode::error::EncodeError> {
-        (self.inner as i32).encode(encoder)
-    }
-}
-
-impl Decode for UnityAssembly {
-    fn decode<D: bincode::de::Decoder>(decoder: &mut D) -> Result<Self, bincode::error::DecodeError> {
-        let ptr = i32::decode(decoder)?;
-
-        Ok(UnityAssembly {
-            inner: ptr as usize as *mut c_void
-        })
-    }
-}
-
 impl UnityAssembly {
-    pub fn get_name(&self, runtime: &Box<dyn Runtime>) -> Result<String, RuntimeError> {
+    pub fn new(pointer: *mut c_void) -> Result<Self, RuntimeError> {
+        if pointer.is_null() {
+            return Err(RuntimeError::NullPointer("pointer"));
+        }
+
+        Ok(UnityAssembly { inner: pointer })
+    }
+    
+    pub fn open<P: AsRef<OsStr>>(
+        filename: P,
+        runtime: &FerrexRuntime,
+    ) -> Result<UnityAssembly, RuntimeError> {
+        let name = filename
+            .as_ref()
+            .to_str()
+            .ok_or_else(|| RuntimeError::Passthrough("Failed to get string from path".to_string()))?;
+        runtime.open_assembly(name)
+    }
+
+    pub fn get_name(&self, runtime: &FerrexRuntime) -> Result<String, RuntimeError> {
         runtime.get_assembly_name(self)
     }
 
-    pub fn get_image(&self, runtime: &Box<dyn Runtime>) -> Result<UnityImage, RuntimeError> {
+    pub fn get_image(&self, runtime: &FerrexRuntime) -> Result<UnityImage, RuntimeError> {
         runtime.assembly_get_image(self)
     }
 
-    pub fn get_class(&self, runtime: &Box<dyn Runtime>, namespace: &str, name: &str) -> Result<UnityClass, RuntimeError> {
+    pub fn get_class(
+        &self,
+        namespace: &str,
+        name: &str,
+        runtime: &FerrexRuntime,
+    ) -> Result<UnityClass, RuntimeError> {
         runtime.get_class(self, namespace.to_string(), name.to_string())
     }
 }
