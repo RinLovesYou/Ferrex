@@ -1,4 +1,10 @@
-use std::{error::Error, fs::{self, File}, path::PathBuf, process::Command, io::Write};
+use std::{
+    error::Error,
+    fs::{self, File},
+    io::Write,
+    path::PathBuf,
+    process::Command,
+};
 
 use crate::core;
 
@@ -33,28 +39,34 @@ unity-rs = { path = \"../unity\" }";
     let path = path.join("src");
     fs::create_dir(&path)?;
 
-    let mod_path = path.join("mod.rs");
+    let lib_path = path.join("lib.rs");
 
     let mut assemblies = runtime.get_assemblies()?;
 
     assemblies.sort_by(|a, b| {
-        a.get_name(runtime).unwrap().to_lowercase().cmp(&b.get_name(runtime).unwrap().to_lowercase())
+        a.get_name(runtime)
+            .unwrap()
+            .to_lowercase()
+            .cmp(&b.get_name(runtime).unwrap().to_lowercase())
     });
 
     for asm in assemblies.iter() {
-        let name = asm.get_name(runtime)?.to_lowercase().replace(".", "_").replace("-", "_");
+        let name = asm
+            .get_name(runtime)?
+            .to_lowercase()
+            .replace(".", "_")
+            .replace("-", "_");
         let folder = path.join(&name);
 
-        fs::create_dir(folder)?;
         let mut file = std::fs::OpenOptions::new()
-        .write(true)
-        .append(true)
-        .create(true)
-        .open(&mod_path)?;
+            .write(true)
+            .append(true)
+            .create(true)
+            .open(&lib_path)?;
 
         file.write_all(format!("pub mod {};\n", name).as_bytes())?;
 
-        
+        fs::create_dir(folder)?;
     }
 
     Ok(())

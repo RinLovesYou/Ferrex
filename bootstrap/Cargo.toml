@@ -18,12 +18,15 @@ codegen = "*"
 bytemuck = "*"
 anyhow = "*"
 scotch-host = "0.1"
-bincode = "2.0.0-rc.2"
 libloading = "*"
-
+libc = "0.2.140"
+libc-stdhandle = "0.1.0"
 
 [target.'cfg(windows)'.dependencies]
-winapi = { version = "0.3.9", features = ["winuser", "minwindef", "std", "libloaderapi"] }
+windows = { version = "0.46.0", features = [
+    "Win32_Foundation",
+    "Win32_System_Console",
+]}
 
 [lib]
 name = "Bootstrap"

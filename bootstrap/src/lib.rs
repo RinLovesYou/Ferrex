@@ -20,6 +20,8 @@ mod hooking;
 mod errors;
 mod mods;
 mod bindgen;
+pub mod utils;
+mod console;
 
 use ctor::ctor;
 

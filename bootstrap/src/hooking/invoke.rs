@@ -7,7 +7,7 @@ use unity_rs::{
 };
 
 
-use crate::{errors::hookerr::HookError, internal_failure, log, mods::manager::ModManager, core};
+use crate::{errors::{hookerr::HookError, DynErr}, internal_failure, log, mods::manager::ModManager, core, console};
 
 use super::hook;
 
@@ -59,7 +59,8 @@ fn invoke_detour_inner(
     object: Address,
     params: *mut Address,
     exception: *mut Address,
-) -> Result<Address, Box<dyn Error>> {
+) -> Result<Address, DynErr> {
+    console::set_handles()?;
     let ret = unsafe {
         let original =
             INVOKE_ORIGINAL.ok_or(HookError::NoTrampoline("runtime_invoke".to_string()))?;

@@ -1,11 +1,12 @@
 use std::{error::Error};
 
 
-use unity_rs::runtime::{Runtime, self};
+use unity_rs::runtime::{Runtime, self, FerrexRuntime};
 
-use crate::{hooking, log, logging::logger};
+use crate::{hooking, log, logging::logger, errors::DynErr, console};
 
 pub fn init() -> Result<(), Box<dyn Error>> {
+    console::init()?;
     logger::init()?;
 
     if !check_unity()? {
@@ -17,14 +18,15 @@ pub fn init() -> Result<(), Box<dyn Error>> {
 
     //hooking::init::hook_init()?;
     hooking::invoke::hook_invoke()?;
+    console::null_handles()?;
 
     Ok(())
 }
 
 #[allow(dead_code)]
-static mut RUNTIME: Option<Box<dyn Runtime>> = None;
+static mut RUNTIME: Option<FerrexRuntime> = None;
 
-pub fn get_runtime() -> Result<&'static Box<dyn Runtime>, Box<dyn Error>> {
+pub fn get_runtime() -> Result<&'static FerrexRuntime, DynErr> {
     unsafe {
         if RUNTIME.is_none() {
             RUNTIME = Some(runtime::get_runtime()?)

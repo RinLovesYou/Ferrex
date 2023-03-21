@@ -111,7 +111,15 @@ impl MonoExports {
                 lib.sym("mono_install_assembly_preload_hook")?,
             ),
             mono_assembly_foreach: Some(lib.sym("mono_assembly_foreach")?),
-            mono_assembly_get_name: Some(lib.sym("mono_assembly_get_name")?),
+            mono_assembly_get_name: {
+                // probably not present on old mono
+                let res = lib.sym("mono_assembly_get_name");
+
+                match res.is_err() {
+                    true => None,
+                    false => Some(res.unwrap()),
+                }
+            },
             mono_class_get_name: Some(lib.sym("mono_class_get_name")?),
             mono_class_get_property_from_name: Some(lib.sym("mono_class_get_property_from_name")?),
             mono_property_get_name: Some(lib.sym("mono_property_get_name")?),
