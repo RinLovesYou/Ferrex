@@ -4,7 +4,7 @@ use std::ffi::c_char;
 
 use libc::c_void;
 
-use crate::libs::{LibError, NativeLibrary, NativeMethod};
+use crate::{libs::{LibError, NativeLibrary, NativeMethod}, utils::libs::get_function_option};
 
 use super::types::{Il2CppDomain, Il2CppMethod, Il2CppObject, Il2CppString, Il2CppThread};
 
@@ -38,14 +38,14 @@ impl Il2CppExports {
     /// looks up and returns all methods from il2cpp
     pub fn new(lib: &NativeLibrary) -> Result<Il2CppExports, LibError> {
         Ok(Il2CppExports {
-            il2cpp_init: Some(lib.sym("il2cpp_init")?),
-            il2cpp_thread_current: Some(lib.sym("il2cpp_thread_current")?),
-            il2cpp_runtime_invoke: Some(lib.sym("il2cpp_runtime_invoke")?),
-            il2cpp_method_get_name: Some(lib.sym("il2cpp_method_get_name")?),
-            il2cpp_thread_attach: Some(lib.sym("il2cpp_thread_attach")?),
-            il2cpp_domain_get: Some(lib.sym("il2cpp_domain_get")?),
-            il2cpp_add_internal_call: Some(lib.sym("il2cpp_add_internal_call")?),
-            il2cpp_string_new: Some(lib.sym("il2cpp_string_new")?),
+            il2cpp_init: get_function_option(&lib, "il2cpp_init")?,
+            il2cpp_thread_current: get_function_option(&lib, "il2cpp_thread_current")?,
+            il2cpp_runtime_invoke: get_function_option(&lib, "il2cpp_runtime_invoke")?,
+            il2cpp_method_get_name: get_function_option(&lib, "il2cpp_method_get_name")?,
+            il2cpp_thread_attach: get_function_option(&lib, "il2cpp_thread_attach")?,
+            il2cpp_domain_get: get_function_option(&lib, "il2cpp_domain_get")?,
+            il2cpp_add_internal_call: get_function_option(&lib, "il2cpp_add_internal_call")?,
+            il2cpp_string_new: get_function_option(&lib, "il2cpp_string_new")?,
         })
     }
 }

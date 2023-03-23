@@ -2,7 +2,7 @@
 
 use std::ffi::{c_char, c_int, c_void};
 
-use crate::libs::{LibError, NativeLibrary, NativeMethod};
+use crate::{libs::{LibError, NativeLibrary, NativeMethod}, utils::libs::get_function_option};
 
 use super::types::{
     AssemblyName, MonoAssembly, MonoClass, MonoDomain, MonoImage, MonoMethod, MonoObject,
@@ -64,7 +64,7 @@ pub struct MonoExports {
 impl MonoExports {
     pub fn new(lib: &NativeLibrary) -> Result<Self, LibError> {
         Ok(MonoExports {
-            mono_jit_init_version: Some(lib.sym("mono_jit_init_version")?),
+            mono_jit_init_version: get_function_option(&lib,  "mono_jit_init_version")?,
             mono_debug_domain_create: {
                 // probably not present on old mono
                 let res = lib.sym("mono_debug_domain_create");
@@ -73,59 +73,33 @@ impl MonoExports {
                     false => Some(res.unwrap()),
                 }
             },
-            mono_string_new: Some(lib.sym("mono_string_new")?),
-            mono_runtime_invoke: Some(lib.sym("mono_runtime_invoke")?),
-            mono_string_to_utf8: Some(lib.sym("mono_string_to_utf8")?),
-            mono_thread_current: Some(lib.sym("mono_thread_current")?),
-            mono_thread_attach: Some(lib.sym("mono_thread_attach")?),
-            mono_get_root_domain: Some(lib.sym("mono_get_root_domain")?),
-            mono_class_from_name: Some(lib.sym("mono_class_from_name")?),
-            mono_method_get_name: Some(lib.sym("mono_method_get_name")?),
-            mono_thread_set_main: Some(lib.sym("mono_thread_set_main")?),
-            mono_object_to_string: {
-                // probably not present on old mono
-                let res = lib.sym("mono_object_to_string");
-
-                match res.is_err() {
-                    true => None,
-                    false => Some(res.unwrap()),
-                }
-            },
-            mono_add_internal_call: Some(lib.sym("mono_add_internal_call")?),
-            mono_domain_set_config: {
-                // probably not present on old mono
-                let res = lib.sym("mono_domain_set_config");
-
-                match res.is_err() {
-                    true => None,
-                    false => Some(res.unwrap()),
-                }
-            },
-            mono_assembly_get_image: Some(lib.sym("mono_assembly_get_image")?),
-            mono_assembly_get_object: Some(lib.sym("mono_assembly_get_object")?),
-            mono_domain_assembly_open: Some(lib.sym("mono_domain_assembly_open")?),
-            mono_install_assembly_load_hook: Some(lib.sym("mono_install_assembly_load_hook")?),
-            mono_class_get_method_from_name: Some(lib.sym("mono_class_get_method_from_name")?),
-            mono_install_assembly_search_hook: Some(lib.sym("mono_install_assembly_search_hook")?),
-            mono_install_assembly_preload_hook: Some(
-                lib.sym("mono_install_assembly_preload_hook")?,
-            ),
-            mono_assembly_foreach: Some(lib.sym("mono_assembly_foreach")?),
-            mono_assembly_get_name: {
-                // probably not present on old mono
-                let res = lib.sym("mono_assembly_get_name");
-
-                match res.is_err() {
-                    true => None,
-                    false => Some(res.unwrap()),
-                }
-            },
-            mono_class_get_name: Some(lib.sym("mono_class_get_name")?),
-            mono_class_get_property_from_name: Some(lib.sym("mono_class_get_property_from_name")?),
-            mono_property_get_name: Some(lib.sym("mono_property_get_name")?),
-            mono_property_get_get_method: Some(lib.sym("mono_property_get_get_method")?),
-            mono_property_get_set_method: Some(lib.sym("mono_property_get_set_method")?),
-            mono_method_get_unmanaged_thunk: Some(lib.sym("mono_method_get_unmanaged_thunk")?),
+            mono_string_new: get_function_option(&lib,  "mono_string_new")?,
+            mono_runtime_invoke: get_function_option(&lib,  "mono_runtime_invoke")?,
+            mono_string_to_utf8: get_function_option(&lib,  "mono_string_to_utf8")?,
+            mono_thread_current: get_function_option(&lib,  "mono_thread_current")?,
+            mono_thread_attach: get_function_option(&lib,  "mono_thread_attach")?,
+            mono_get_root_domain: get_function_option(&lib,  "mono_get_root_domain")?,
+            mono_class_from_name: get_function_option(&lib,  "mono_class_from_name")?,
+            mono_method_get_name: get_function_option(&lib,  "mono_method_get_name")?,
+            mono_thread_set_main: get_function_option(&lib,  "mono_thread_set_main")?,
+            mono_object_to_string: get_function_option(&lib,  "mono_object_to_string")?,
+            mono_add_internal_call: get_function_option(&lib,  "mono_add_internal_call")?,
+            mono_domain_set_config: get_function_option(&lib,  "mono_domain_set_config")?,
+            mono_assembly_get_image: get_function_option(&lib,  "mono_assembly_get_image")?,
+            mono_assembly_get_object: get_function_option(&lib,  "mono_assembly_get_object")?,
+            mono_domain_assembly_open: get_function_option(&lib,  "mono_domain_assembly_open")?,
+            mono_install_assembly_load_hook: get_function_option(&lib,  "mono_install_assembly_load_hook")?,
+            mono_class_get_method_from_name: get_function_option(&lib,  "mono_class_get_method_from_name")?,
+            mono_install_assembly_search_hook: get_function_option(&lib,  "mono_install_assembly_search_hook")?,
+            mono_install_assembly_preload_hook: get_function_option(&lib,  "mono_install_assembly_preload_hook")?,
+            mono_assembly_foreach: get_function_option(&lib,  "mono_assembly_foreach")?,
+            mono_assembly_get_name: get_function_option(&lib,  "mono_assembly_get_name")?,
+            mono_class_get_name: get_function_option(&lib,  "mono_class_get_name")?,
+            mono_class_get_property_from_name: get_function_option(&lib,  "mono_class_get_property_from_name")?,
+            mono_property_get_name: get_function_option(&lib,  "mono_property_get_name")?,
+            mono_property_get_get_method: get_function_option(&lib,  "mono_property_get_get_method")?,
+            mono_property_get_set_method: get_function_option(&lib,  "mono_property_get_set_method")?,
+            mono_method_get_unmanaged_thunk: get_function_option(&lib,  "mono_method_get_unmanaged_thunk")?,
         })
     }
 }
