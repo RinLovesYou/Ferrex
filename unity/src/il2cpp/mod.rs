@@ -260,10 +260,10 @@ impl Runtime for Il2Cpp {
         );
 
         match result.is_null() {
-            true => Ok(Some(UnityObject {
+            false => Ok(Some(UnityObject {
                 inner: result.cast(),
             })),
-            false => Ok(None),
+            true => Ok(None),
         }
     }
 
@@ -343,5 +343,9 @@ impl Runtime for Il2Cpp {
 
     fn get_assembly_object(&self, _assembly: &UnityAssembly) -> Result<UnityObject, RuntimeError>  {
         Err(RuntimeError::NotImplemented("get_assembly_object"))
+    }
+
+    fn unbox_object(&self, _object: &UnityObject) -> Result<UnityObject, RuntimeError> {
+        Err(RuntimeError::NotImplemented("unbox_object"))
     }
 }

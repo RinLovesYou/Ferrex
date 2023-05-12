@@ -135,6 +135,7 @@ pub trait Runtime {
     fn get_unmanaged_thunk(&self, method: &UnityMethod) -> Result<MethodPointer, RuntimeError>;
     fn get_method(&self, name: &str, args: i32, class: &UnityClass) -> Result<UnityMethod, RuntimeError>;
     fn get_assembly_object(&self, assembly: &UnityAssembly) -> Result<UnityObject, RuntimeError>;
+    fn unbox_object(&self, object: &UnityObject) -> Result<UnityObject, RuntimeError>;
 }
 
 /// looks up the runtime

@@ -326,10 +326,10 @@ impl Runtime for Mono {
         );
 
         match result.is_null() {
-            true => Ok(Some(UnityObject {
+            false => Ok(Some(UnityObject {
                 inner: result.cast(),
             })),
-            false => Ok(None),
+            true => Ok(None),
         }
     }
 
@@ -638,6 +638,28 @@ impl Runtime for Mono {
 
         if object.is_null() {
             return Err(RuntimeError::ReturnedNull("mono_assembly_get_object"));
+        }
+
+        Ok(UnityObject {
+            inner: object.cast(),
+        })
+    }
+
+    fn unbox_object(&self, object: &UnityObject) -> Result<UnityObject, RuntimeError> {
+        let function = &self
+            .exports
+            .clone()
+            .mono_object_unbox
+            .ok_or(RuntimeError::MissingFunction("mono_object_unbox"))?;
+
+        if object.inner.is_null() {
+            return Err(RuntimeError::NullPointer("object"));
+        }
+
+        let object = function(object.inner.cast());
+
+        if object.is_null() {
+            return Err(RuntimeError::ReturnedNull("mono_object_unbox"));
         }
 
         Ok(UnityObject {

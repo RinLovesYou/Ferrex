@@ -59,6 +59,7 @@ pub struct MonoExports {
     pub mono_property_get_get_method: Option<NativeMethod<fn(*mut MonoProperty) -> *mut MonoMethod>>,
     pub mono_property_get_set_method: Option<NativeMethod<fn(*mut MonoProperty) -> *mut MonoMethod>>,
     pub mono_method_get_unmanaged_thunk: Option<NativeMethod<fn(*mut MonoMethod) -> *mut c_void>>,
+    pub mono_object_unbox: Option<NativeMethod<fn(*mut MonoObject) -> *mut c_void>>,
 }
 
 impl MonoExports {
@@ -100,6 +101,7 @@ impl MonoExports {
             mono_property_get_get_method: get_function_option(&lib,  "mono_property_get_get_method")?,
             mono_property_get_set_method: get_function_option(&lib,  "mono_property_get_set_method")?,
             mono_method_get_unmanaged_thunk: get_function_option(&lib,  "mono_method_get_unmanaged_thunk")?,
+            mono_object_unbox: get_function_option(&lib,  "mono_object_unbox")?,
         })
     }
 }
